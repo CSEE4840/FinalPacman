@@ -33,19 +33,34 @@ module vga_ball (
         .VGA_SYNC_n(VGA_SYNC_n)
     );
 
-    // Positions
+    // Register for Pac-Man's position
+    reg [9:0] pacman_x;
+    reg [9:0] pacman_y;
+
+    // Ghost position (fixed)
     wire [9:0] ghost_x = 300;
     wire [9:0] ghost_y = 240;
-    wire [9:0] pacman_x = 340;
-    wire [9:0] pacman_y = 240;
 
-    // Tile indices and pixel indices (outside always block!)
+    // Tile addressing
     wire [6:0] tile_x = hcount[10:4];
     wire [6:0] tile_y = vcount[9:3];
     wire [2:0] tx = hcount[3:1];
     wire [2:0] ty = vcount[2:0];
 
-    // Tiles (stored as memory)
+    // Write logic
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            pacman_x <= 340;
+            pacman_y <= 240;
+        end else if (chipselect && write) begin
+            case (address)
+                3'd0: pacman_x <= writedata[9:0];
+                3'd1: pacman_y <= writedata[9:0];
+            endcase
+        end
+    end
+
+    // Tile bitmaps
     reg [7:0] straight_tile[0:7];
     reg [7:0] corner_tile[0:7];
     initial begin
@@ -68,7 +83,7 @@ module vga_ball (
         corner_tile[7] = 8'b00011000;
     end
 
-    // Ghost and Pac-Man bitmaps (16x16)
+    // Bitmaps
     reg [15:0] ghost_bitmap[0:15];
     reg [15:0] pacman_bitmap[0:15];
     initial begin
@@ -107,66 +122,37 @@ module vga_ball (
         pacman_bitmap[15] = 16'b0000000000000000;
     end
 
+    // VGA Output
     always @(*) begin
-        // Default black background
         VGA_R = 8'd0;
         VGA_G = 8'd0;
         VGA_B = 8'd0;
 
-        // ================== WALL AND TILE DRAWING ===================
-
-        // Outer border using straight and corner tiles
+        // Walls (same as before)
         if ((tile_x == 12 || tile_x == 67) && (tile_y >= 12 && tile_y <= 46)) begin
-            if (straight_tile[ty][7 - tx])
-                VGA_B = 8'hFF;
+            if (straight_tile[ty][7 - tx]) VGA_B = 8'hFF;
         end else if ((tile_y == 12 || tile_y == 46) && (tile_x >= 12 && tile_x <= 67)) begin
-            if (straight_tile[tx][7 - ty])
-                VGA_B = 8'hFF;
+            if (straight_tile[tx][7 - ty]) VGA_B = 8'hFF;
         end else begin
-            if (tile_x == 11 && tile_y == 11) begin
-                if (corner_tile[ty][7 - tx])
-                    VGA_B = 8'hFF;
-            end else if (tile_x == 68 && tile_y == 11) begin
-                if (corner_tile[7-tx][7-ty])
-                    VGA_B = 8'hFF;
-            end else if (tile_x == 68 && tile_y == 47) begin
-                if (corner_tile[7 - ty][tx])
-                    VGA_B = 8'hFF;
-            end else if (tile_x == 11 && tile_y == 47) begin
-                if (corner_tile[tx][ty])
-                    VGA_B = 8'hFF;
-            end
+            if (tile_x == 11 && tile_y == 11 && corner_tile[ty][7 - tx]) VGA_B = 8'hFF;
+            else if (tile_x == 68 && tile_y == 11 && corner_tile[7-tx][7-ty]) VGA_B = 8'hFF;
+            else if (tile_x == 68 && tile_y == 47 && corner_tile[7 - ty][tx]) VGA_B = 8'hFF;
+            else if (tile_x == 11 && tile_y == 47 && corner_tile[tx][ty]) VGA_B = 8'hFF;
         end
 
-        // ================== PLACE YOUR CUSTOM TILES BELOW ===================
+        // Extra tile example
         if ((tile_x == 25 || tile_x == 54) && (tile_y >= 14 && tile_y <= 17)) begin
-            if (straight_tile[ty][7 - tx])
-                VGA_B = 8'hFF;
+            if (straight_tile[ty][7 - tx]) VGA_B = 8'hFF;
         end else if ((tile_y == 14 || tile_y == 17) && (tile_x >= 25 && tile_x <= 54)) begin
-            if (straight_tile[tx][7 - ty])
-                VGA_B = 8'hFF;
+            if (straight_tile[tx][7 - ty]) VGA_B = 8'hFF;
         end else begin
-            if (tile_x == 25 && tile_y == 14) begin
-                if (corner_tile[ty][7 - tx])
-                    VGA_B = 8'hFF;
-            end else if (tile_x == 54 && tile_y == 14) begin
-                if (corner_tile[7-tx][7-ty])
-                    VGA_B = 8'hFF;
-            end else if (tile_x == 54 && tile_y == 17) begin
-                if (corner_tile[7 - ty][tx])
-                    VGA_B = 8'hFF;
-            end else if (tile_x == 25 && tile_y == 17) begin
-                if (corner_tile[tx][ty])
-                    VGA_B = 8'hFF;
-            end
+            if (tile_x == 25 && tile_y == 14 && corner_tile[ty][7 - tx]) VGA_B = 8'hFF;
+            else if (tile_x == 54 && tile_y == 14 && corner_tile[7-tx][7-ty]) VGA_B = 8'hFF;
+            else if (tile_x == 54 && tile_y == 17 && corner_tile[7 - ty][tx]) VGA_B = 8'hFF;
+            else if (tile_x == 25 && tile_y == 17 && corner_tile[tx][ty]) VGA_B = 8'hFF;
         end
 
-        // ================== END OF CUSTOM TILE DRAWING ======================
-
-
-        // ================== CHARACTER DRAWING ===================
-
-        // Draw ghost
+        // Ghost drawing
         if (hcount[10:1] >= ghost_x && hcount[10:1] < ghost_x + 16 &&
             vcount >= ghost_y && vcount < ghost_y + 16) begin
             if (ghost_bitmap[vcount - ghost_y][15 - (hcount[10:1] - ghost_x)]) begin
@@ -175,7 +161,7 @@ module vga_ball (
             end
         end
 
-        // Draw pacman
+        // Pac-Man drawing
         if (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
             vcount >= pacman_y && vcount < pacman_y + 16) begin
             if (pacman_bitmap[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin
