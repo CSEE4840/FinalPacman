@@ -121,11 +121,12 @@ int main() {
         int r = libusb_interrupt_transfer(keyboard, endpoint_address,
                                           (unsigned char *)&packet, sizeof(packet),
                                           &transferred, 0);
-        printf("libusb_interrupt_transfer returned: %d\n", r);
+        // printf("libusb_interrupt_transfer returned: %d\n", r);
         if (r == 0 && transferred == sizeof(packet)) {
             for (int i = 0; i < MAX_KEYS; i++) {
                 uint8_t key = packet.keycode[i];
                 if (key != 0) {
+                    printf("Key pressed: %02X\n", key);
                     handle_input(usb_to_ascii(key, packet.modifiers));
                 }
             }
