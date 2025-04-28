@@ -218,8 +218,81 @@ void update_ghosts() {
     }
 }
 
-void game_init_playfield();
-void init_ghosts();
+void game_init_playfield(void) {
+    static const char* tiles =
+       //0123456789012345678901234567
+        "0UUUUUUUUUUUU45UUUUUUUUUUUU1" // 3
+        "L............rl............R" // 4
+        "L.ebbf.ebbbf.rl.ebbbf.ebbf.R" // 5
+        "LPr  l.r   l.rl.r   l.r  lPR" // 6
+        "L.guuh.guuuh.gh.guuuh.guuh.R" // 7
+        "L..........................R" // 8
+        "L.ebbf.ef.ebbbbbbf.ef.ebbf.R" // 9
+        "L.guuh.rl.guuyxuuh.rl.guuh.R" // 10
+        "L......rl....rl....rl......R" // 11
+        "2BBBBf.rzbbf rl ebbwl.eBBBB3" // 12
+        "     L.rxuuh gh guuyl.R     " // 13
+        "     L.rl          rl.R     " // 14
+        "     L.rl mjs  tjn rl.R     " // 15
+        "UUUUUh.gh i      q gh.gUUUUU" // 16
+        "      .   i      q   .      " // 17
+        "BBBBBf.ef i      q ef.eBBBBB" // 18
+        "     L.rl okkkkkkp rl.R     " // 19
+        "     L.rl          rl.R     " // 20
+        "     L.rl ebbbbbbf rl.R     " // 21
+        "0UUUUh.gh guuyxuuh gh.gUUUU1" // 22
+        "L............rl............R" // 23
+        "L.ebbf.ebbbf.rl.ebbbf.ebbf.R" // 24
+        "L.guyl.guuuh.gh.guuuh.rxuh.R" // 25
+        "LP..rl.......  .......rl..PR" // 26
+        "6bf.rl.ef.ebbbbbbf.ef.rl.eb8" // 27
+        "7uh.gh.rl.guuyxuuh.rl.gh.gu9" // 28
+        "L......rl....rl....rl......R" // 29
+        "L.ebbbbwzbbf.rl.ebbwzbbbbf.R" // 30
+        "L.guuuuuuuuh.gh.guuuuuuuuh.R" // 31
+        "L..........................R" // 32
+        "2BBBBBBBBBBBBBBBBBBBBBBBBBB3"; // 33
+       //0123456789012345678901234567
+
+    uint8_t t[128];
+    for (int i = 0; i < 128; i++) t[i] = 1;
+    t[' '] = 0x40; t['0'] = 0xD1; t['1'] = 0xD0; t['2'] = 0xD5; t['3'] = 0xD4;
+    t['4'] = 0xFB; t['5'] = 0xFA; t['6'] = 0xD7; t['7'] = 0xD9;
+    t['8'] = 0xD6; t['9'] = 0xD8; t['U'] = 0xDB; t['L'] = 0xD3;
+    t['R'] = 0xD2; t['B'] = 0xDC; t['b'] = 0xDF; t['e'] = 0xE7;
+    t['f'] = 0xE6; t['g'] = 0xEB; t['h'] = 0xEA; t['l'] = 0xE8;
+    t['r'] = 0xE9; t['u'] = 0xE5; t['w'] = 0xF5; t['x'] = 0xF2;
+    t['y'] = 0xF3; t['z'] = 0xF4; t['m'] = 0xED; t['n'] = 0xEC;
+    t['o'] = 0xEF; t['p'] = 0xEE; t['j'] = 0xDD; t['i'] = 0xD2;
+    t['k'] = 0xDB; t['q'] = 0xD3; t['s'] = 0xF1; t['t'] = 0xF0;
+    t['-'] = 0xFE; t['P'] = 0xFD;
+
+    for (int y = 3, i = 0; y <= 33; y++) {
+        for (int x = 0; x < 28; x++, i++) {
+            set_tile(x, y, t[tiles[i] & 127]);
+            if (tiles[i] == '.' || tiles[i] == 'P') {
+                PELLET_RAM_BASE[y] |= (1 << (31 - x));
+            }
+        }
+    }
+}
+void init_ghosts() {
+    const int start_positions[4][2] = {
+        {13, 14}, {14, 14}, {13, 15}, {14, 15}
+        
+    };
+    for (int i = 0; i < NUM_GHOSTS; i++) {
+        ghosts[i].x = start_positions[i][0] * TILE_WIDTH + TILE_WIDTH / 2;
+        ghosts[i].y = start_positions[i][1] * TILE_HEIGHT + TILE_HEIGHT / 2;
+        ghosts[i].dir = i % 4;
+        ghosts[i].sprite = &sprites[SPRITE_GHOST_0 + i];
+        ghost_t* g = &ghosts[i];
+        g->sprite->x = g->x;
+        g->sprite->y = g->y;
+        g->sprite->visible = 1;
+        g->sprite->frame = 0;
+    }
+}
 
 void game_init() {
     *SCORE_REG = 0;
