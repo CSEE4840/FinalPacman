@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h> // for debugging output
 #include <unistd.h>
-
+#include <stdlib.h> // for rand()
 
 // Sprite descriptor structure (8 bytes per sprite)
 typedef struct {
@@ -46,11 +46,16 @@ uint32_t fake_control = 1; // always ready
 #define SPRITE_GHOST_1 2
 #define SPRITE_GHOST_2 3
 #define SPRITE_GHOST_3 4
+typedef enum {
+    GHOST_BLINKY,  // 追踪 Pac-Man
+    GHOST_RANDOM   // 随机走动
+} ghost_strategy_t;
 
 typedef struct {
     int x, y;             // pixel position
     uint8_t dir;          // current direction (0=up, 1=left, 2=down, 3=right)
     sprite_t* sprite;     // pointer to corresponding sprite
+    ghost_strategy_t strategy; // ⭐新增：鬼的策略
 } ghost_t;
 
 ghost_t ghosts[NUM_GHOSTS];
@@ -189,13 +194,14 @@ void game_init_playfield(void) {
 void init_ghosts() {
     const int start_positions[4][2] = {
         {13, 14}, {14, 14}, {13, 15}, {14, 15}
-        
     };
     for (int i = 0; i < NUM_GHOSTS; i++) {
         ghosts[i].x = start_positions[i][0] * TILE_WIDTH + TILE_WIDTH / 2;
         ghosts[i].y = start_positions[i][1] * TILE_HEIGHT + TILE_HEIGHT / 2;
         ghosts[i].dir = i % 4;
         ghosts[i].sprite = &sprites[SPRITE_GHOST_0 + i];
+        ghosts[i].strategy = (i == 0) ? GHOST_BLINKY : GHOST_RANDOM; // ⭐ 第0只Blinky追踪，其他随机
+
         ghost_t* g = &ghosts[i];
         g->sprite->x = g->x;
         g->sprite->y = g->y;
@@ -218,24 +224,62 @@ void game_init() {
 void update_ghosts() {
     static int ghost_tick = 0;
     ghost_tick++;
-    if (ghost_tick % 10 != 0) return;
+    if (ghost_tick % 10 != 0) return; // 控制鬼移动速度
 
     for (int i = 0; i < NUM_GHOSTS; i++) {
         ghost_t* g = &ghosts[i];
-        int new_x = g->x;
-        int new_y = g->y;
-        switch (g->dir) {
-            case 0: new_y -= TILE_HEIGHT; break;
-            case 1: new_x -= TILE_WIDTH; break;
-            case 2: new_y += TILE_HEIGHT; break;
-            case 3: new_x += TILE_WIDTH; break;
-        }
 
-        if (can_move_to(new_x, new_y)) {
-            g->x = new_x;
-            g->y = new_y;
-        } else {
-            g->dir = (g->dir + 1) % 4; // turn
+        if (g->strategy == GHOST_BLINKY) {
+            // 🔴 Blinky: 追踪 Pac-Man
+            int best_dir = -1;
+            int best_dist = 1e9;
+
+            int gx = g->x / TILE_WIDTH;
+            int gy = g->y / TILE_HEIGHT;
+            int px = pacman_x / TILE_WIDTH;
+            int py = pacman_y / TILE_HEIGHT;
+
+            const int dx[4] = {0, -1, 0, 1};
+            const int dy[4] = {-1, 0, 1, 0};
+
+            for (int dir = 0; dir < 4; dir++) {
+                int nx = g->x + dx[dir] * TILE_WIDTH;
+                int ny = g->y + dy[dir] * TILE_HEIGHT;
+                if (!can_move_to(nx, ny)) continue;
+
+                int tx = nx / TILE_WIDTH;
+                int ty = ny / TILE_HEIGHT;
+                int dist = (tx - px) * (tx - px) + (ty - py) * (ty - py);
+
+                if (dist < best_dist) {
+                    best_dist = dist;
+                    best_dir = dir;
+                }
+            }
+
+            if (best_dir != -1) {
+                g->dir = best_dir;
+                g->x += dx[g->dir] * TILE_WIDTH;
+                g->y += dy[g->dir] * TILE_HEIGHT;
+            }
+
+        } else if (g->strategy == GHOST_RANDOM) {
+            // 🎲 Random: 随机移动
+            const int dx[4] = {0, -1, 0, 1};
+            const int dy[4] = {-1, 0, 1, 0};
+
+            int tries = 4;
+            while (tries--) {
+                int dir = rand() % 4;
+                int nx = g->x + dx[dir] * TILE_WIDTH;
+                int ny = g->y + dy[dir] * TILE_HEIGHT;
+                if (can_move_to(nx, ny)) {
+                    g->dir = dir;
+                    g->x = nx;
+                    g->y = ny;
+                    break;
+                }
+            }
         }
 
         g->sprite->x = g->x;
