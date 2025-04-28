@@ -2,9 +2,9 @@ CFLAGS = -Wall -I/opt/homebrew/Cellar/libusb/1.0.27/include -L/opt/homebrew/lib
 LDFLAGS = -lusb-1.0
 CC = gcc
 
-OBJECTS = keyb.o usbkeyboard.o
+OBJECTS = pacman_simplified_with_keyboard.o usbkeyboard.o
 
-TARFILES = Makefile keyb.c \
+TARFILES = Makefile pacman_simplified_with_keyboard.c \
 	usbkeyboard.h usbkeyboard.c
 
 lab2 : $(OBJECTS)
@@ -17,7 +17,7 @@ lab2.tar.gz : $(TARFILES)
 	tar zcf lab2.tar.gz lab2
 	rm -rf lab2
 
-lab2.o : keyb.c usbkeyboard.h
+lab2.o : pacman_simplified_with_keyboard.c usbkeyboard.h
 usbkeyboard.o : usbkeyboard.c usbkeyboard.h
 
 .PHONY : clean
