@@ -87,14 +87,14 @@ void handle_input(char c) {
 }
 
 // === Pac-Man 游戏逻辑 ===
-typedef struct {
-    uint8_t x, y;
-    uint8_t frame;
-    uint8_t visible;
-    uint8_t direction;
-    uint8_t type_id;
-    uint8_t rsv1, rsv2;
-} sprite_t;
+// typedef struct {
+//     uint8_t x, y;
+//     uint8_t frame;
+//     uint8_t visible;
+//     uint8_t direction;
+//     uint8_t type_id;
+//     uint8_t rsv1, rsv2;
+// } sprite_t;
 
 typedef struct {
     int x, y;
