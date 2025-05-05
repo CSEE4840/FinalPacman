@@ -134,7 +134,7 @@ int pacman_y = 23 * TILE_HEIGHT + TILE_HEIGHT / 2;
 uint8_t pacman_dir = 1; // 初始向左
 uint16_t score = 0;
 
-
+int vga_ball_fd;
 
 void update_all_to_driver() {
     vga_all_state_t state;
@@ -386,7 +386,7 @@ void game_loop() {
 }
 
 
-int vga_ball_fd;
+
 
 // void update_pacman_position(unsigned short x, unsigned short y, unsigned short old_x, unsigned short old_y) {
 //     vga_ball_arg_t vla;
