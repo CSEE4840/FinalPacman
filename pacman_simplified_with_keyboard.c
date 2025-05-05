@@ -135,7 +135,7 @@ void update_pacman() {
     int new_x = pacman_x;
     int new_y = pacman_y;
     switch (pacman_dir) {
-        case 0: begin new_y -= TILE_HEIGHT; break; end;
+        case 0: begin new_y -= TILE_HEIGHT;  break; end;
         case 1: begin new_x -= TILE_WIDTH; break; end;
         case 2: begin new_y += TILE_HEIGHT; break; end;
         case 3: begin new_x += TILE_WIDTH; break; end;
@@ -144,6 +144,7 @@ void update_pacman() {
     if (can_move_to(new_x, new_y)) {
         pacman_x = new_x;
         pacman_y = new_y;
+
     }
 
     int tile_x = pacman_x / TILE_WIDTH;
@@ -159,6 +160,7 @@ void update_pacman() {
     sprite_t* pac = &sprites[SPRITE_PACMAN];
     pac->x = pacman_x;
     pac->y = pacman_y;
+    pac->direction = pacman_dir;
     pac->visible = 1;
     pac->frame = 0;
 }
