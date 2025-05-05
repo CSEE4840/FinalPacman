@@ -35,22 +35,6 @@ typedef struct {
 //     uint8_t control;
 // } vga_all_state_t;
 
-void update_all_to_driver() {
-    vga_all_state_t state;
-
-    // 填入所有 sprite 信息
-    for (int i = 0; i < 5; i++) {
-        state.sprites[i] = fake_sprites[i];
-    }
-
-    state.score = score;
-    state.control = 1; // 控制位根据需要设置，比如VBLANK_ACK等
-
-    if (ioctl(vga_ball_fd, VGA_BALL_WRITE_ALL, &state)) {
-        perror("ioctl(VGA_BALL_WRITE_ALL) failed");
-    }
-}
-
 // === USB Keyboard相关 ===
 struct usb_keyboard_packet packet;
 struct libusb_device_handle *keyboard;
@@ -149,6 +133,24 @@ int pacman_x = 15 * TILE_WIDTH + TILE_WIDTH / 2;
 int pacman_y = 23 * TILE_HEIGHT + TILE_HEIGHT / 2;
 uint8_t pacman_dir = 1; // 初始向左
 uint16_t score = 0;
+
+
+
+void update_all_to_driver() {
+    vga_all_state_t state;
+
+    // 填入所有 sprite 信息
+    for (int i = 0; i < 5; i++) {
+        state.sprites[i] = fake_sprites[i];
+    }
+
+    state.score = score;
+    state.control = 1; // 控制位根据需要设置，比如VBLANK_ACK等
+
+    if (ioctl(vga_ball_fd, VGA_BALL_WRITE_ALL, &state)) {
+        perror("ioctl(VGA_BALL_WRITE_ALL) failed");
+    }
+}
 
 // 工具函数
 void set_tile(int x, int y, uint8_t tile_id) {
