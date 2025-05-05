@@ -356,6 +356,7 @@ void game_init() {
 }
 
 void game_loop() {
+    printf("Game loop started. Press ESC to exit.\n");
     uint8_t prev_keys[MAX_KEYS] = {0};
     int transferred;
 
