@@ -135,10 +135,10 @@ void update_pacman() {
     int new_x = pacman_x;
     int new_y = pacman_y;
     switch (pacman_dir) {
-        case 0: new_y -= TILE_HEIGHT; break;
-        case 1: new_x -= TILE_WIDTH; break;
-        case 2: new_y += TILE_HEIGHT; break;
-        case 3: new_x += TILE_WIDTH; break;
+        case 0: begin new_y -= TILE_HEIGHT; break; end;
+        case 1: begin new_x -= TILE_WIDTH; break; end;
+        case 2: begin new_y += TILE_HEIGHT; break; end;
+        case 3: begin new_x += TILE_WIDTH; break; end;
     }
 
     if (can_move_to(new_x, new_y)) {
