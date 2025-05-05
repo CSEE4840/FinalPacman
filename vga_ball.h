@@ -2,7 +2,8 @@
 #define _VGA_BALL_H_
 
 #include <linux/ioctl.h>
-#include <stdint.h>
+// #include <stdint.h>
+#include <linux/types.h>
 #define VGA_BALL_MAGIC 'q'
 
 // Sprite descriptor structure (matches your memory map)
