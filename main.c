@@ -431,7 +431,7 @@ int main() {
     // }
 
     // printf("Pac-Man USB keyboard control started\n");
-
+    printf("Starting game loop...\n");
     game_loop();
 
     libusb_close(keyboard);
