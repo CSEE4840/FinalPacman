@@ -211,7 +211,7 @@ void update_pacman() {
     pac->y = pacman_y;
     pac->visible = 1;
     pac->frame = 0;
-    pac->rsv1 = pacman_dir;
+    pac->direction = pacman_dir;
 }
 
 bool is_ghost_tile(int x, int y) {
