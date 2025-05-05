@@ -12,47 +12,62 @@
 
 #define DRIVER_NAME "vga_ball"
 
-#define PACMAN_X(x)        ((x) + 0)
-#define PACMAN_Y(x)        ((x) + 2)
-#define PACMAN_OLD_X(x)    ((x) + 4)
-#define PACMAN_OLD_Y(x)    ((x) + 6)
+#define SPRITE_DESC_OFFSET(i)  (dev.virtbase + (i) * 8)
+#define SCORE_REG_OFFSET       (dev.virtbase + 0x28)
+#define CONTROL_REG_OFFSET     (dev.virtbase + 0x2B)
+
+#define NUM_SPRITES 5
 
 struct vga_ball_dev {
     struct resource res;
     void __iomem *virtbase;
-    unsigned short pacman_x, pacman_y;
-    unsigned short old_pacman_x, old_pacman_y;
 } dev;
 
-static void write_pacman_position(vga_ball_arg_t *vla) {
-    iowrite16(vla->pacman_x,     PACMAN_X(dev.virtbase));
-    iowrite16(vla->pacman_y,     PACMAN_Y(dev.virtbase));
-    iowrite16(vla->old_pacman_x, PACMAN_OLD_X(dev.virtbase));
-    iowrite16(vla->old_pacman_y, PACMAN_OLD_Y(dev.virtbase));
+static void write_all_state(vga_all_state_t *state) {
+    for (int i = 0; i < NUM_SPRITES; i++) {
+        void __iomem *base = SPRITE_DESC_OFFSET(i);
+        iowrite8(state->sprites[i].x,        base);
+        iowrite8(state->sprites[i].y,        base + 1);
+        iowrite8(state->sprites[i].frame,    base + 2);
+        iowrite8(state->sprites[i].visible,  base + 3);
+        iowrite8(state->sprites[i].direction,base + 4);
+        iowrite8(state->sprites[i].type_id,  base + 5);
+        iowrite8(state->sprites[i].rsv1,     base + 6);
+        iowrite8(state->sprites[i].rsv2,     base + 7);
+    }
+    iowrite16(state->score, SCORE_REG_OFFSET);
+    iowrite8(state->control, CONTROL_REG_OFFSET);
+}
 
-    dev.pacman_x = vla->pacman_x;
-    dev.pacman_y = vla->pacman_y;
-    dev.old_pacman_x = vla->old_pacman_x;
-    dev.old_pacman_y = vla->old_pacman_y;
+static void read_all_state(vga_all_state_t *state) {
+    for (int i = 0; i < NUM_SPRITES; i++) {
+        void __iomem *base = SPRITE_DESC_OFFSET(i);
+        state->sprites[i].x         = ioread8(base);
+        state->sprites[i].y         = ioread8(base + 1);
+        state->sprites[i].frame     = ioread8(base + 2);
+        state->sprites[i].visible   = ioread8(base + 3);
+        state->sprites[i].direction = ioread8(base + 4);
+        state->sprites[i].type_id   = ioread8(base + 5);
+        state->sprites[i].rsv1      = ioread8(base + 6);
+        state->sprites[i].rsv2      = ioread8(base + 7);
+    }
+    state->score = ioread16(SCORE_REG_OFFSET);
+    state->control = ioread8(CONTROL_REG_OFFSET);
 }
 
 static long vga_ball_ioctl(struct file *f, unsigned int cmd, unsigned long arg) {
-    vga_ball_arg_t vla;
+    vga_all_state_t user_state;
 
     switch (cmd) {
-        case VGA_BALL_WRITE_PACMAN_POS:
-            if (copy_from_user(&vla, (void __user *)arg, sizeof(vga_ball_arg_t)))
+        case VGA_BALL_WRITE_ALL:
+            if (copy_from_user(&user_state, (void __user *)arg, sizeof(user_state)))
                 return -EFAULT;
-            write_pacman_position(&vla);
+            write_all_state(&user_state);
             break;
 
-        case VGA_BALL_READ_PACMAN_POS:
-            vla.pacman_x = dev.pacman_x;
-            vla.pacman_y = dev.pacman_y;
-            vla.old_pacman_x = dev.old_pacman_x;
-            vla.old_pacman_y = dev.old_pacman_y;
-
-            if (copy_to_user((void __user *)arg, &vla, sizeof(vga_ball_arg_t)))
+        case VGA_BALL_READ_ALL:
+            read_all_state(&user_state);
+            if (copy_to_user((void __user *)arg, &user_state, sizeof(user_state)))
                 return -EFAULT;
             break;
 
@@ -144,4 +159,4 @@ module_exit(vga_ball_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Your Name");
-MODULE_DESCRIPTION("Pac-Man VGA Controller - Position via Software");
+MODULE_DESCRIPTION("Pac-Man VGA Controller - Sprite and Score Management");

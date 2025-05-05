@@ -3,17 +3,32 @@
 
 #include <linux/ioctl.h>
 
-#define VGA_BALL_MAGIC            'q'
-#define VGA_BALL_WRITE_PACMAN_POS _IOW(VGA_BALL_MAGIC, 1, struct vga_ball_arg)
-#define VGA_BALL_READ_PACMAN_POS  _IOR(VGA_BALL_MAGIC, 2, struct vga_ball_arg)
+#define VGA_BALL_MAGIC 'q'
 
-struct vga_ball_arg {
-    unsigned short pacman_x;
-    unsigned short pacman_y;
-    unsigned short old_pacman_x;
-    unsigned short old_pacman_y;
+// Sprite descriptor structure (matches your memory map)
+struct sprite_desc {
+    uint8_t x;
+    uint8_t y;
+    uint8_t frame;
+    uint8_t visible;
+    uint8_t direction;
+    uint8_t type_id;
+    uint8_t reserved1;
+    uint8_t reserved2;
 };
 
-typedef struct vga_ball_arg vga_ball_arg_t;
+// IOCTL interface
+#define VGA_BALL_WRITE_ALL _IOW(VGA_BALL_MAGIC, 1, struct vga_all_state)
+#define VGA_BALL_READ_ALL  _IOR(VGA_BALL_MAGIC, 2, struct vga_all_state)
+
+// Aggregate structure
+struct vga_all_state {
+    struct sprite_desc sprites[5]; // Pac-Man + 4 ghosts
+    uint16_t score;
+    uint8_t control;
+};
+
+typedef struct sprite_desc sprite_desc_t;
+typedef struct vga_all_state vga_all_state_t;
 
 #endif
