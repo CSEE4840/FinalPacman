@@ -418,11 +418,11 @@ int main() {
     // struct libusb_device_handle *keyboard;
     // struct usb_keyboard_packet packet;
 
-    vga_ball_fd = open("/dev/vga_ball", O_RDWR);
-    if (vga_ball_fd == -1) {
-        perror("Failed to open /dev/vga_ball");
-        return 1;
-    }
+    // vga_ball_fd = open("/dev/vga_ball", O_RDWR);
+    // if (vga_ball_fd == -1) {
+    //     perror("Failed to open /dev/vga_ball");
+    //     return 1;
+    // }
 
     // keyboard = openkeyboard(&endpoint_address);
     // if (!keyboard) {
