@@ -15,6 +15,9 @@ default: module hello
 module:
 	${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} modules
 
+hello: hello.c usbkeyboard.c
+	$(CC) -Wall -o hello hello.c usbkeyboard.c -lusb-1.0
+
 clean:
 	${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} clean
 	${RM} hello
