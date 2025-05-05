@@ -10,7 +10,7 @@ module vga_ball (
     input [15:0] writedata,
     input write,
     input chipselect,
-    input [2:0] address,
+    input [4:0] address,
 
     output reg [7:0] VGA_R, VGA_G, VGA_B,
     output VGA_CLK, VGA_HS, VGA_VS,
@@ -58,9 +58,11 @@ module vga_ball (
             pacman_dir <= DIR_RIGHT;
         end else if (chipselect && write) begin
             case (address)
-                3'd0: pacman_x <= writedata[9:0];
-                3'd1: pacman_y <= writedata[9:0];
-                3'd2: pacman_dir <= writedata[1:0];
+		5'd0: begin
+		    pacman_x <= writedata[7:0];
+		    pacman_y <= writedata[15:8];
+		end
+                5'd3: pacman_dir <= writedata[1:0];
             endcase
         end
     end
