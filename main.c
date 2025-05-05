@@ -141,7 +141,15 @@ void update_all_to_driver() {
 
     // 填入所有 sprite 信息
     for (int i = 0; i < 5; i++) {
-        state.sprites[i] = fake_sprites[i];
+        // state.sprites[i] = fake_sprites[i];
+        state.sprites[i].x = sprites[i].x;
+        state.sprites[i].y = sprites[i].y;
+        state.sprites[i].frame = sprites[i].frame;
+        state.sprites[i].visible = sprites[i].visible;
+        state.sprites[i].direction = sprites[i].direction;
+        state.sprites[i].type_id = sprites[i].type_id;
+        state.sprites[i].rsv1 = sprites[i].rsv1;
+        state.sprites[i].rsv2 = sprites[i].rsv2;
     }
 
     state.score = score;
