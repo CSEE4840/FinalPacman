@@ -24,7 +24,9 @@ struct vga_ball_dev {
 } dev;
 
 static void write_all_state(vga_all_state_t *state) {
-    for (int i = 0; i < NUM_SPRITES; i++) {
+
+    int i = 0;
+    for (i = 0; i < NUM_SPRITES; i++) {
         void __iomem *base = SPRITE_DESC_OFFSET(i);
         iowrite8(state->sprites[i].x,        base);
         iowrite8(state->sprites[i].y,        base + 1);
@@ -40,7 +42,8 @@ static void write_all_state(vga_all_state_t *state) {
 }
 
 static void read_all_state(vga_all_state_t *state) {
-    for (int i = 0; i < NUM_SPRITES; i++) {
+    int i = 0;
+    for (i = 0; i < NUM_SPRITES; i++) {
         void __iomem *base = SPRITE_DESC_OFFSET(i);
         state->sprites[i].x         = ioread8(base);
         state->sprites[i].y         = ioread8(base + 1);
