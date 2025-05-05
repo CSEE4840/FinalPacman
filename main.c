@@ -148,8 +148,8 @@ void update_all_to_driver() {
         state.sprites[i].visible = sprites[i].visible;
         state.sprites[i].direction = sprites[i].direction;
         state.sprites[i].type_id = sprites[i].type_id;
-        state.sprites[i].rsv1 = sprites[i].rsv1;
-        state.sprites[i].rsv2 = sprites[i].rsv2;
+        state.sprites[i].reserved1 = sprites[i].rsv1;
+        state.sprites[i].reserved2 = sprites[i].rsv2;
     }
 
     state.score = score;
