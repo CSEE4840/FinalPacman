@@ -32,8 +32,8 @@ static void write_all_state(vga_all_state_t *state) {
         iowrite8(state->sprites[i].visible,  base + 3);
         iowrite8(state->sprites[i].direction,base + 4);
         iowrite8(state->sprites[i].type_id,  base + 5);
-        iowrite8(state->sprites[i].rsv1,     base + 6);
-        iowrite8(state->sprites[i].rsv2,     base + 7);
+        iowrite8(state->sprites[i].reserved1,     base + 6);
+        iowrite8(state->sprites[i].reserved2,     base + 7);
     }
     iowrite16(state->score, SCORE_REG_OFFSET);
     iowrite8(state->control, CONTROL_REG_OFFSET);
@@ -48,8 +48,8 @@ static void read_all_state(vga_all_state_t *state) {
         state->sprites[i].visible   = ioread8(base + 3);
         state->sprites[i].direction = ioread8(base + 4);
         state->sprites[i].type_id   = ioread8(base + 5);
-        state->sprites[i].rsv1      = ioread8(base + 6);
-        state->sprites[i].rsv2      = ioread8(base + 7);
+        state->sprites[i].reserved1      = ioread8(base + 6);
+        state->sprites[i].reserved2      = ioread8(base + 7);
     }
     state->score = ioread16(SCORE_REG_OFFSET);
     state->control = ioread8(CONTROL_REG_OFFSET);
