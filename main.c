@@ -423,13 +423,13 @@ int main() {
         return 1;
     }
 
-    keyboard = openkeyboard(&endpoint_address);
-    if (!keyboard) {
-        fprintf(stderr, "Could not find a keyboard\n");
-        return 1;
-    }
+    // keyboard = openkeyboard(&endpoint_address);
+    // if (!keyboard) {
+    //     fprintf(stderr, "Could not find a keyboard\n");
+    //     return 1;
+    // }
 
-    printf("Pac-Man USB keyboard control started\n");
+    // printf("Pac-Man USB keyboard control started\n");
 
     game_loop();
 
