@@ -8,14 +8,14 @@
 
 // Sprite descriptor structure (matches your memory map)
 struct sprite_desc {
-    uint8_t x;
-    uint8_t y;
-    uint8_t frame;
-    uint8_t visible;
-    uint8_t direction;
-    uint8_t type_id;
-    uint8_t reserved1;
-    uint8_t reserved2;
+    __u8 x;
+    __u8 y;
+    __u8 frame;
+    __u8 visible;
+    __u8 direction;
+    __u8 type_id;
+    __u8 reserved1;
+    __u8 reserved2;
 };
 
 // IOCTL interface
@@ -25,8 +25,8 @@ struct sprite_desc {
 // Aggregate structure
 struct vga_all_state {
     struct sprite_desc sprites[5]; // Pac-Man + 4 ghosts
-    uint16_t score;
-    uint8_t control;
+    __u16 score;
+    __u8 control;
 };
 
 typedef struct sprite_desc sprite_desc_t;
