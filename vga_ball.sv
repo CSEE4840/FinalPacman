@@ -21,7 +21,6 @@ module vga_ball (
     wire [10:0] hcount;
     wire [9:0]  vcount;
 
-    // VGA sync generator instance
     vga_counters counters_inst (
         .clk50(clk),
         .hcount(hcount),
@@ -33,59 +32,74 @@ module vga_ball (
         .VGA_SYNC_n(VGA_SYNC_n)
     );
 
-    // Register for Pac-Man's position
+    // Pac-Man position and direction
     reg [9:0] pacman_x;
     reg [9:0] pacman_y;
+    reg [1:0] pacman_dir;
 
-    // Ghost position (fixed)
+    // Ghost position
     wire [9:0] ghost_x = 300;
     wire [9:0] ghost_y = 240;
 
-    // Tile addressing
-    wire [6:0] tile_x = hcount[10:4];
-    wire [6:0] tile_y = vcount[9:3];
+    // Direction encoding
+    localparam DIR_UP = 2'd0, DIR_RIGHT = 2'd1, DIR_DOWN = 2'd2, DIR_LEFT = 2'd3;
+
+    // Tile coordinates
+    wire [6:0] tile_x = hcount[10:4];  // 640 / 16 = 40
+    wire [6:0] tile_y = vcount[9:3];   // 480 / 8 = 60
     wire [2:0] tx = hcount[3:1];
     wire [2:0] ty = vcount[2:0];
 
-    // Write logic
+    // Write position and direction from software
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             pacman_x <= 340;
             pacman_y <= 240;
+            pacman_dir <= DIR_RIGHT;
         end else if (chipselect && write) begin
             case (address)
                 3'd0: pacman_x <= writedata[9:0];
                 3'd1: pacman_y <= writedata[9:0];
+                3'd2: pacman_dir <= writedata[1:0];
             endcase
         end
     end
 
-    // Tile bitmaps
-    reg [7:0] straight_tile[0:7];
-    reg [7:0] corner_tile[0:7];
+    // Tile map: 80x60 = 4800 tiles
+    reg [11:0] tile[0:4799];
     initial begin
-        straight_tile[0] = 8'b00011000;
-        straight_tile[1] = 8'b00011000;
-        straight_tile[2] = 8'b00011000;
-        straight_tile[3] = 8'b00011000;
-        straight_tile[4] = 8'b00011000;
-        straight_tile[5] = 8'b00011000;
-        straight_tile[6] = 8'b00011000;
-        straight_tile[7] = 8'b00011000;
-
-        corner_tile[0] = 8'b00000000;
-        corner_tile[1] = 8'b00000000;
-        corner_tile[2] = 8'b00000000;
-        corner_tile[3] = 8'b00001111;
-        corner_tile[4] = 8'b00011111;
-        corner_tile[5] = 8'b00011100;
-        corner_tile[6] = 8'b00011000;
-        corner_tile[7] = 8'b00011000;
+        $readmemh("map.vh", tile);
     end
 
-    // Bitmaps
+    // Tile bitmaps
+    reg [7:0] tile_bitmaps[0:36*8-1];
+	reg [7:0] bitmap_memory[0:4799*8-1]; // 80x60 tiles, 8 rows per tile = 38400 entries
+
+    initial begin
+        $readmemh("tiles.vh", tile_bitmaps);
+    end
+
+  integer i;
+integer base_tile;
+reg [7:0] char_bitmaps[0:575];  // 36 chars × 16 rows
+
+initial begin
+    $readmemh("characters.vh", char_bitmaps);
+
+    base_tile = 15 * 80 + 26;  // (row 15, col 26)
+
+    for (i = 0; i < 8; i++) begin
+        bitmap_memory[(base_tile + 0) * 8 + i] = char_bitmaps[18*16 + i]; // S
+        bitmap_memory[(base_tile + 1) * 8 + i] = char_bitmaps[2*16  + i]; // C
+        bitmap_memory[(base_tile + 2) * 8 + i] = char_bitmaps[14*16 + i]; // O
+        bitmap_memory[(base_tile + 3) * 8 + i] = char_bitmaps[17*16 + i]; // R
+        bitmap_memory[(base_tile + 4) * 8 + i] = char_bitmaps[4*16  + i]; // E
+    end
+end
+
+
+    // Ghost sprite (16x16)
     reg [15:0] ghost_bitmap[0:15];
-    reg [15:0] pacman_bitmap[0:15];
     initial begin
         ghost_bitmap[ 0] = 16'b0000000000000000;
         ghost_bitmap[ 1] = 16'b0000001111000000;
@@ -103,71 +117,46 @@ module vga_ball (
         ghost_bitmap[13] = 16'b0110011100110010;
         ghost_bitmap[14] = 16'b1000001100110001;
         ghost_bitmap[15] = 16'b0000000000000000;
-
-        pacman_bitmap[ 0] = 16'b0000000000000000;
-        pacman_bitmap[ 1] = 16'b0000011111000000;
-        pacman_bitmap[ 2] = 16'b0001111111110000;
-        pacman_bitmap[ 3] = 16'b0011111111111000;
-        pacman_bitmap[ 4] = 16'b0011111111111000;
-        pacman_bitmap[ 5] = 16'b0000111111111100;
-        pacman_bitmap[ 6] = 16'b0000000111111100;
-        pacman_bitmap[ 7] = 16'b0000000000111100;
-        pacman_bitmap[ 8] = 16'b0000000111111100;
-        pacman_bitmap[ 9] = 16'b0001111111111100;
-        pacman_bitmap[10] = 16'b0011111111111000;
-        pacman_bitmap[11] = 16'b0011111111111000;
-        pacman_bitmap[12] = 16'b0001111111110000;
-        pacman_bitmap[13] = 16'b0000011111000000;
-        pacman_bitmap[14] = 16'b0000000000000000;
-        pacman_bitmap[15] = 16'b0000000000000000;
     end
 
-    // VGA Output
+    // Pac-Man sprites
+    reg [15:0] pacman_up[0:15], pacman_right[0:15], pacman_down[0:15], pacman_left[0:15];
+    initial begin
+        $readmemh("pacman_up.vh",    pacman_up);
+        $readmemh("pacman_right.vh", pacman_right);
+        $readmemh("pacman_down.vh",  pacman_down);
+        $readmemh("pacman_left.vh",  pacman_left);
+    end
+
+    // VGA tile rendering
+    wire [12:0] tile_index = tile_y * 80 + tile_x;
+    wire [11:0] tile_id = tile[tile_index];
+    wire [7:0] bitmap_row = tile_bitmaps[tile_id * 8 + ty];
+    wire pixel_on = bitmap_row[7 - tx];
+
     always @(*) begin
-        VGA_R = 8'd0;
-        VGA_G = 8'd0;
-        VGA_B = 8'd0;
+        VGA_R = 0; VGA_G = 0; VGA_B = 0;
 
-        // Walls (same as before)
-        if ((tile_x == 12 || tile_x == 67) && (tile_y >= 12 && tile_y <= 46)) begin
-            if (straight_tile[ty][7 - tx]) VGA_B = 8'hFF;
-        end else if ((tile_y == 12 || tile_y == 46) && (tile_x >= 12 && tile_x <= 67)) begin
-            if (straight_tile[tx][7 - ty]) VGA_B = 8'hFF;
-        end else begin
-            if (tile_x == 11 && tile_y == 11 && corner_tile[ty][7 - tx]) VGA_B = 8'hFF;
-            else if (tile_x == 68 && tile_y == 11 && corner_tile[7-tx][7-ty]) VGA_B = 8'hFF;
-            else if (tile_x == 68 && tile_y == 47 && corner_tile[7 - ty][tx]) VGA_B = 8'hFF;
-            else if (tile_x == 11 && tile_y == 47 && corner_tile[tx][ty]) VGA_B = 8'hFF;
-        end
+        if (pixel_on)
+            VGA_B = 8'hFF;
 
-        // Extra tile example
-        if ((tile_x == 25 || tile_x == 54) && (tile_y >= 14 && tile_y <= 17)) begin
-            if (straight_tile[ty][7 - tx]) VGA_B = 8'hFF;
-        end else if ((tile_y == 14 || tile_y == 17) && (tile_x >= 25 && tile_x <= 54)) begin
-            if (straight_tile[tx][7 - ty]) VGA_B = 8'hFF;
-        end else begin
-            if (tile_x == 25 && tile_y == 14 && corner_tile[ty][7 - tx]) VGA_B = 8'hFF;
-            else if (tile_x == 54 && tile_y == 14 && corner_tile[7-tx][7-ty]) VGA_B = 8'hFF;
-            else if (tile_x == 54 && tile_y == 17 && corner_tile[7 - ty][tx]) VGA_B = 8'hFF;
-            else if (tile_x == 25 && tile_y == 17 && corner_tile[tx][ty]) VGA_B = 8'hFF;
-        end
-
-        // Ghost drawing
+        // Ghost rendering
         if (hcount[10:1] >= ghost_x && hcount[10:1] < ghost_x + 16 &&
             vcount >= ghost_y && vcount < ghost_y + 16) begin
             if (ghost_bitmap[vcount - ghost_y][15 - (hcount[10:1] - ghost_x)]) begin
-                VGA_R = 8'hFF;
-                VGA_B = 8'hFF;
+                VGA_R = 8'hFF; VGA_B = 8'hFF;
             end
         end
 
-        // Pac-Man drawing
+        // Pac-Man rendering
         if (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
             vcount >= pacman_y && vcount < pacman_y + 16) begin
-            if (pacman_bitmap[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin
-                VGA_R = 8'hFF;
-                VGA_G = 8'hFF;
-            end
+            case (pacman_dir)
+                DIR_UP:    if (pacman_up[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin VGA_R = 8'hFF; VGA_G = 8'hFF; end
+                DIR_RIGHT: if (pacman_right[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin VGA_R = 8'hFF; VGA_G = 8'hFF; end
+                DIR_DOWN:  if (pacman_down[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin VGA_R = 8'hFF; VGA_G = 8'hFF; end
+                DIR_LEFT:  if (pacman_left[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin VGA_R = 8'hFF; VGA_G = 8'hFF; end
+            endcase
         end
     end
 
