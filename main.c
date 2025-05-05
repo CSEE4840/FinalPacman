@@ -424,18 +424,18 @@ int main() {
     //     return 1;
     // }
 
-    // keyboard = openkeyboard(&endpoint_address);
-    // if (!keyboard) {
-    //     fprintf(stderr, "Could not find a keyboard\n");
-    //     return 1;
-    // }
+    // // keyboard = openkeyboard(&endpoint_address);
+    // // if (!keyboard) {
+    // //     fprintf(stderr, "Could not find a keyboard\n");
+    // //     return 1;
+    // // }
 
-    // printf("Pac-Man USB keyboard control started\n");
-    printf("Starting game loop...\n");
-    game_loop();
+    // // printf("Pac-Man USB keyboard control started\n");
+    // printf("Starting game loop...\n");
+    // game_loop();
 
-    libusb_close(keyboard);
-    libusb_exit(NULL);
-    close(vga_ball_fd);
+    // libusb_close(keyboard);
+    // libusb_exit(NULL);
+    // close(vga_ball_fd);
     return 0;
 }
