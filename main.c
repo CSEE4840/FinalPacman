@@ -29,11 +29,11 @@ typedef struct {
     uint8_t rsv1, rsv2;
 } sprite_t;
 
-typedef struct {
-    sprite_t sprites[5];
-    uint16_t score;
-    uint8_t control;
-} vga_all_state_t;
+// typedef struct {
+//     sprite_t sprites[5];
+//     uint16_t score;
+//     uint8_t control;
+// } vga_all_state_t;
 
 void update_all_to_driver() {
     vga_all_state_t state;
