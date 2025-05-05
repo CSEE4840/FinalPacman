@@ -418,24 +418,24 @@ int main() {
     // struct libusb_device_handle *keyboard;
     // struct usb_keyboard_packet packet;
 
-    vga_ball_fd = open("/dev/vga_ball", O_RDWR);
-    if (vga_ball_fd == -1) {
-        perror("Failed to open /dev/vga_ball");
-        return 1;
-    }
-
-    // keyboard = openkeyboard(&endpoint_address);
-    // if (!keyboard) {
-    //     fprintf(stderr, "Could not find a keyboard\n");
+    // vga_ball_fd = open("/dev/vga_ball", O_RDWR);
+    // if (vga_ball_fd == -1) {
+    //     perror("Failed to open /dev/vga_ball");
     //     return 1;
     // }
 
-    // printf("Pac-Man USB keyboard control started\n");
-    printf("Starting game loop...\n");
-    game_loop();
+    // // keyboard = openkeyboard(&endpoint_address);
+    // // if (!keyboard) {
+    // //     fprintf(stderr, "Could not find a keyboard\n");
+    // //     return 1;
+    // // }
 
-    libusb_close(keyboard);
-    libusb_exit(NULL);
-    close(vga_ball_fd);
+    // // printf("Pac-Man USB keyboard control started\n");
+    // printf("Starting game loop...\n");
+    // game_loop();
+
+    // libusb_close(keyboard);
+    // libusb_exit(NULL);
+    // close(vga_ball_fd);
     return 0;
 }
