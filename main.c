@@ -582,6 +582,8 @@ void game_loop() {
         update_pacman();
         update_ghosts();
 
+        print_tilemap();
+        
         // 检查 Game Over 条件
         if (check_gameover()) {
             *CONTROL_REG |= CTRL_GAME_OVER;
@@ -663,7 +665,7 @@ int main() {
         game_init();
         printf("Starting game loop...\n");
         game_loop();
-        print_tilemap();
+        
     
     }
 
