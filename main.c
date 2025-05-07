@@ -268,9 +268,9 @@ void update_pacman() {
     //     *SCORE_REG = generate_packed_score(score);
     //     printf("[Pac-Man] Ate pellet at (%d, %d). Score = %d\n", tile_x, tile_y, score);
     // }
-    if (get_pellet_bit(tile_x, tile_y - 3)) {
-        clear_pellet_bit(tile_x, tile_y - 3);
-        set_tile(tile_x, tile_y - 3, 0);
+    if (get_pellet_bit(tile_x, tile_y)) {
+        clear_pellet_bit(tile_x, tile_y);
+        set_tile(tile_x, tile_y, 0);
         score += 10;
         *SCORE_REG = generate_packed_score(score);
         last_pellet_index = tile_y * SCREEN_WIDTH_TILES + tile_x;
@@ -413,7 +413,7 @@ void game_init_playfield(void) {
     t['k'] = 0xDB; t['q'] = 0xD3; t['s'] = 0xF1; t['t'] = 0xF0;
     t['-'] = 0xFE; t['P'] = 0xFD;
 
-    for (int y = 3, i = 0; y <= 33; y++) {
+    for (int y = 0, i = 0; y <= 30; y++) {
         for (int x = 0; x < 28; x++, i++) {
             set_tile(x, y, t[tiles[i] & 127]);
             if (tiles[i] == '.' || tiles[i] == 'P') {
