@@ -173,7 +173,7 @@ void update_all_to_driver() {
         state.sprites[i].reserved2 = sprites[i].rsv2;
     }
 
-    state.score = score;
+    state.score = * SCORE_REG;
     state.control = *CONTROL_REG;
 
     if (ioctl(vga_ball_fd, VGA_BALL_WRITE_ALL, &state)) {
@@ -201,15 +201,24 @@ bool can_move_to(int px, int py) {
     uint8_t tile = TILEMAP_BASE[ty * SCREEN_WIDTH_TILES + tx];
     return (tile == 0x40 || tile == 1 || tile == 0);
 }
+const int step_size = TILE_HEIGHT / 4;
+
+uint16_t generate_packed_score(uint16_t score) {
+    int s = score % 10000;  // 保证最多4位
+    return ((s / 1000) << 12) |
+           (((s / 100) % 10) << 8) |
+           (((s / 10) % 10) << 4) |
+           (s % 10);
+}
 
 void update_pacman() {
     int new_x = pacman_x;
     int new_y = pacman_y;
     switch (pacman_dir) {
-        case 0: new_y -= TILE_HEIGHT; break;
-        case 1: new_x -= TILE_WIDTH; break;
-        case 2: new_y += TILE_HEIGHT; break;
-        case 3: new_x += TILE_WIDTH; break;
+        case 0: new_y -= step_size ; break;
+        case 1: new_x -= step_size ; break;
+        case 2: new_y += step_size ; break;
+        case 3: new_x += step_size ; break;
     }
 
     if (can_move_to(new_x, new_y)) {
@@ -223,7 +232,7 @@ void update_pacman() {
         clear_pellet_bit(tile_x, tile_y);
         set_tile(tile_x, tile_y, 0);
         score += 10;
-        *SCORE_REG = score;
+        *SCORE_REG = generate_packed_score(score);
         printf("[Pac-Man] Ate pellet at (%d, %d). Score = %d\n", tile_x, tile_y, score);
     }
 
@@ -291,10 +300,10 @@ void update_ghosts() {
         int new_ty = g->y / TILE_HEIGHT;
 
         switch (g->dir) {
-            case 0: new_y -= TILE_HEIGHT; new_ty--; break;
-            case 1: new_x -= TILE_WIDTH;  new_tx--; break;
-            case 2: new_y += TILE_HEIGHT; new_ty++; break;
-            case 3: new_x += TILE_WIDTH;  new_tx++; break;
+            case 0: new_y -= step_size; new_ty--; break;
+            case 1: new_x -= step_size;  new_tx--; break;
+            case 2: new_y += step_size; new_ty++; break;
+            case 3: new_x += step_size;  new_tx++; break;
         }
 
         // 判断是否能移动且目标 tile 未被其他幽灵占用
