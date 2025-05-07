@@ -234,7 +234,7 @@ bool can_move_to(int px, int py) {
     }
     return (tile == 0x40 || tile == 1 || tile == 0);
 }
-const int step_size = TILE_HEIGHT / 4;
+const int step_size = TILE_HEIGHT / 2;
 
 uint16_t generate_packed_score(uint16_t score) {
     int s = score % 10000;  // 保证最多4位
