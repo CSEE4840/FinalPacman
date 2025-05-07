@@ -232,7 +232,7 @@ bool can_move_to(int px, int py) {
     else{
         printf("Tile at (%d, %d) is not walkable: %d\n", tx, ty, tile);
     }
-    return (tile == 0x40 || tile == 1 || tile == 0);
+    return (tile == 0x40 || tile == 1 || tile == 0 || tile == 0xFD);
 }
 const int step_size = TILE_HEIGHT / 2;
 
@@ -271,6 +271,7 @@ void update_pacman() {
     if (get_pellet_bit(tile_x, tile_y)) {
         clear_pellet_bit(tile_x, tile_y);
         set_tile(tile_x, tile_y, 0);
+        pacman_dir = 5; // Eat pellet animation direction
         score += 10;
         *SCORE_REG = generate_packed_score(score);
         last_pellet_index = tile_y * SCREEN_WIDTH_TILES + tile_x;
