@@ -134,9 +134,10 @@ uint8_t fake_control = 1;
 
 ghost_t ghosts[NUM_GHOSTS];
 sprite_t* sprites = (sprite_t*) SPRITE_BASE;
-
-int pacman_x = 15 * TILE_WIDTH + TILE_WIDTH / 2;
-int pacman_y = 23 * TILE_HEIGHT + TILE_HEIGHT / 2;
+#define PACMAN_INIT_X 15 * TILE_WIDTH + TILE_WIDTH / 2
+#define PACMAN_INIT_Y 23 * TILE_HEIGHT + TILE_HEIGHT / 2
+int pacman_x = PACMAN_INIT_X;
+int pacman_y = PACMAN_INIT_Y;
 uint8_t pacman_dir = 1; // 初始向左
 uint16_t score = 0;
 
@@ -402,42 +403,106 @@ bool check_collision() {
 
 void game_init() {
     *SCORE_REG = 0;
+    *CONTROL_REG = 0;
     // fake_control = CTRL_START;
     game_init_playfield();
     init_ghosts();
     sprite_t* pac = &sprites[SPRITE_PACMAN];
+    pacman_x = PACMAN_INIT_X;
+    pacman_y = PACMAN_INIT_Y;
     pac->x = pacman_x;
     pac->y = pacman_y;
     pac->visible = 1;
     pac->frame = 0;
 }
 
-void game_loop() {
-    wait_for_start_signal();
-    printf("Game loop started. Press ESC to exit.\n");
+// void game_loop() {
+//     wait_for_start_signal();
+//     printf("Game loop started. Press ESC to exit.\n");
 
+//     int transferred;
+//     while (1) {
+//         int r = libusb_interrupt_transfer(keyboard, endpoint_address,
+//                                           (unsigned char *)&packet, sizeof(packet),
+//                                           &transferred, 1);
+
+//         if (r == 0 && transferred == sizeof(packet)) {
+//             for (int i = 0; i < MAX_KEYS; i++) {
+//                 uint8_t key = packet.keycode[i];
+//                 if (key != 0) {
+//                     char c = usb_to_ascii(key, packet.modifiers);
+//                     handle_input(c);
+//                     process_control_keys(c);
+//                 }
+//             }
+//             if (packet.keycode[0] == 0x29) { // ESC退出
+//                 printf("ESC pressed. Exiting.\n");
+//                 break;
+//             }
+//         }
+
+//         if (paused || is_control_flag_set(CTRL_PAUSE)) {
+//             usleep(100000);
+//             continue;
+//         }
+
+//         update_pacman();
+//         update_ghosts();
+
+//         if (check_collision()) {
+//             set_control_flag(CTRL_GAME_OVER);
+//             printf("Game Over! Pac-Man was caught by a ghost.\n");
+//             break;
+//         }
+
+//         update_all_to_driver(); 
+//         print_tilemap();
+//         usleep(100000);
+//     }
+// }
+bool check_gameover() {
+    for (int i = 0; i < NUM_GHOSTS; i++) {
+        int dx = abs(pacman_x - ghosts[i].x);
+        int dy = abs(pacman_y - ghosts[i].y);
+        if (dx < TILE_WIDTH && dy < TILE_HEIGHT) {
+            return true;
+        }
+    }
+    return false;
+}
+void game_loop() {
+    printf("Waiting for START signal...\n");
+    wait_for_start_signal();
+
+    printf("Game loop started. Press ESC to exit.\n");
     int transferred;
+
     while (1) {
         int r = libusb_interrupt_transfer(keyboard, endpoint_address,
                                           (unsigned char *)&packet, sizeof(packet),
                                           &transferred, 1);
-
         if (r == 0 && transferred == sizeof(packet)) {
             for (int i = 0; i < MAX_KEYS; i++) {
                 uint8_t key = packet.keycode[i];
                 if (key != 0) {
                     char c = usb_to_ascii(key, packet.modifiers);
-                    handle_input(c);
-                    process_control_keys(c);
+                    if (c == '\x1b') {
+                        printf("ESC pressed. Exiting.\n");
+                        *CONTROL_REG |= CTRL_GAME_OVER;
+                        return;
+                    } else if (c == ' ') {
+                        *CONTROL_REG ^= CTRL_PAUSE;
+                    } else if (c == 'r' || c == 'R') {
+                        *CONTROL_REG |= CTRL_RESET;
+                        return;
+                    } else {
+                        handle_input(c);
+                    }
                 }
-            }
-            if (packet.keycode[0] == 0x29) { // ESC退出
-                printf("ESC pressed. Exiting.\n");
-                break;
             }
         }
 
-        if (paused || is_control_flag_set(CTRL_PAUSE)) {
+        if (*CONTROL_REG & CTRL_PAUSE) {
             usleep(100000);
             continue;
         }
@@ -445,18 +510,38 @@ void game_loop() {
         update_pacman();
         update_ghosts();
 
-        if (check_collision()) {
-            set_control_flag(CTRL_GAME_OVER);
-            printf("Game Over! Pac-Man was caught by a ghost.\n");
-            break;
+        // 检查 Game Over 条件
+        if (check_gameover()) {
+            *CONTROL_REG |= CTRL_GAME_OVER;
+            printf("[Game] Game Over! Press 'r' to restart...\n");
         }
 
-        update_all_to_driver(); 
-        print_tilemap();
+        update_all_to_driver();
         usleep(100000);
+
+        // 如果 Game Over，暂停游戏，直到 reset
+        if (*CONTROL_REG & CTRL_GAME_OVER) {
+            while (!(*CONTROL_REG & CTRL_RESET)) {
+                int r = libusb_interrupt_transfer(keyboard, endpoint_address,
+                                                  (unsigned char *)&packet, sizeof(packet),
+                                                  &transferred, 1);
+                if (r == 0 && transferred == sizeof(packet)) {
+                    for (int i = 0; i < MAX_KEYS; i++) {
+                        uint8_t key = packet.keycode[i];
+                        if (key != 0) {
+                            char c = usb_to_ascii(key, packet.modifiers);
+                            if (c == 'r' || c == 'R') {
+                                *CONTROL_REG |= CTRL_RESET;
+                            }
+                        }
+                    }
+                }
+                usleep(100000);
+            }
+            return;  // reset 被设置，退出 game_loop()，由 main() 重启游戏
+        }
     }
 }
-
 
 
 // void update_pacman_position(unsigned short x, unsigned short y, unsigned short old_x, unsigned short old_y) {
@@ -472,7 +557,7 @@ void game_loop() {
 // }
 
 int main() {
-    game_init();
+    
 
     if ((keyboard = openkeyboard(&endpoint_address)) == NULL) {
         fprintf(stderr, "Cannot find USB keyboard.\n");
@@ -484,28 +569,33 @@ int main() {
     // unsigned short x = 320, y = 240;
     // unsigned short old_x = x, old_y = y;
 
-    // uint8_t endpoint_address;
-    // struct libusb_device_handle *keyboard;
-    // struct usb_keyboard_packet packet;
+    uint8_t endpoint_address;
+    struct libusb_device_handle *keyboard;
+    struct usb_keyboard_packet packet;
 
-    // vga_ball_fd = open("/dev/vga_ball", O_RDWR);
-    // if (vga_ball_fd == -1) {
-    //     perror("Failed to open /dev/vga_ball");
+    vga_ball_fd = open("/dev/vga_ball", O_RDWR);
+    if (vga_ball_fd == -1) {
+        perror("Failed to open /dev/vga_ball");
+        return 1;
+    }
+
+    // keyboard = openkeyboard(&endpoint_address);
+    // if (!keyboard) {
+    //     fprintf(stderr, "Could not find a keyboard\n");
     //     return 1;
     // }
 
-    // // keyboard = openkeyboard(&endpoint_address);
-    // // if (!keyboard) {
-    // //     fprintf(stderr, "Could not find a keyboard\n");
-    // //     return 1;
-    // // }
+    // printf("Pac-Man USB keyboard control started\n");
+    while(1)
+    {
+        game_init();
+        printf("Starting game loop...\n");
+        game_loop();
+    
+    }
 
-    // // printf("Pac-Man USB keyboard control started\n");
-    // printf("Starting game loop...\n");
-    // game_loop();
-
-    // libusb_close(keyboard);
-    // libusb_exit(NULL);
-    // close(vga_ball_fd);
+    libusb_close(keyboard);
+    libusb_exit(NULL);
+    close(vga_ball_fd);
     return 0;
 }
