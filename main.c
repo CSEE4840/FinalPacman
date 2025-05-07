@@ -417,7 +417,7 @@ void init_ghosts() {
 
 void wait_for_start_signal() {
     printf("Waiting for START signal...\n");
-
+    int transferred;
     while (1) {
         int r = libusb_interrupt_transfer(keyboard, endpoint_address,
                                           (unsigned char *)&packet, sizeof(packet),
