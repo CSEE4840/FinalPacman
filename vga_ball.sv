@@ -47,45 +47,47 @@ module vga_ball (
 
     // 1Hz auto-rotate
     reg [25:0] second_counter;
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            second_counter <= 0;
-            pacman_dir <= DIR_RIGHT;
 
-            ghost_x[0] <= 100; ghost_y[0] <= 100; ghost_dir[0] <= DIR_LEFT;
-            ghost_x[1] <= 200; ghost_y[1] <= 100; ghost_dir[1] <= DIR_RIGHT;
-            ghost_x[2] <= 300; ghost_y[2] <= 100; ghost_dir[2] <= DIR_UP;
-            ghost_x[3] <= 400; ghost_y[3] <= 100; ghost_dir[3] <= DIR_DOWN;
+always @(posedge clk or posedge reset) begin
+    if (reset) begin
+        second_counter <= 0;
+        pacman_x <= 340;
+        pacman_y <= 240;
+        pacman_dir <= DIR_RIGHT;
 
-        end else begin
-            second_counter <= second_counter + 1;
-            if (second_counter == 50_000_000) begin
-                second_counter <= 0;
-                pacman_dir <= pacman_dir + 1;
+        ghost_x[0] <= 100; ghost_y[0] <= 100; ghost_dir[0] <= DIR_LEFT;
+        ghost_x[1] <= 200; ghost_y[1] <= 100; ghost_dir[1] <= DIR_RIGHT;
+        ghost_x[2] <= 300; ghost_y[2] <= 100; ghost_dir[2] <= DIR_UP;
+        ghost_x[3] <= 400; ghost_y[3] <= 100; ghost_dir[3] <= DIR_DOWN;
 
-                ghost_dir[0] <= ghost_dir[0] + 1;
-                ghost_dir[1] <= ghost_dir[1] + 1;
-                ghost_dir[2] <= ghost_dir[2] + 1;
-                ghost_dir[3] <= ghost_dir[3] + 1;
-            end
-        end
-    end
+    end else begin
+        second_counter <= second_counter + 1;
 
-    // Software write
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            pacman_x <= 340;
-            pacman_y <= 240;
-        end else if (chipselect && write) begin
+        // Handle software writes
+        if (chipselect && write) begin
             case (address)
                 5'd0: begin
                     pacman_x <= writedata[7:0];
                     pacman_y <= writedata[15:8];
                 end
-                5'd3: pacman_dir <= writedata[1:0];
+                5'd3: pacman_dir <= writedata[2:0];
             endcase
         end
+
+        // Auto-rotate only if no override
+        else if (second_counter == 50_000_000) begin
+            second_counter <= 0;
+
+            pacman_dir <= (pacman_dir == DIR_EAT) ? DIR_UP : pacman_dir + 1;
+
+            ghost_dir[0] <= ghost_dir[0] + 1;
+            ghost_dir[1] <= ghost_dir[1] + 1;
+            ghost_dir[2] <= ghost_dir[2] + 1;
+            ghost_dir[3] <= ghost_dir[3] + 1;
+        end
     end
+end
+
 
     // Tile and character memory
     reg [11:0] tile[0:4799];
@@ -127,7 +129,7 @@ module vga_ball (
     end
 
     // Pac-Man sprites
-    reg [31:0] pacman_up[0:15], pacman_right[0:15], pacman_down[0:15], pacman_left[0:15];
+    reg [31:0] pacman_up[0:15], pacman_right[0:15], pacman_down[0:15], pacman_left[0:15], pacman_eat[0:15];
     initial begin
         $readmemh("pacman_up.vh",    pacman_up);
         $readmemh("pacman_right.vh", pacman_right);
@@ -139,7 +141,7 @@ module vga_ball (
     // Ghost shared sprite
 	localparam logic [1:0] GHOST_LEFT [0:15][0:15] = '{
     '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
+    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd0,2'd0},
@@ -158,7 +160,7 @@ module vga_ball (
 
 	localparam logic [1:0] GHOST_RIGHT [0:15][0:15] = '{
     '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
+    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd0,2'd0},
@@ -176,7 +178,7 @@ module vga_ball (
 };
 	localparam logic [1:0] GHOST_UP [0:15][0:15] = '{
     '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
+    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd0,2'd1,2'd3,2'd3,2'd1,2'd1,2'd1,2'd3,2'd3,2'd1,2'd1,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd1,2'd2,2'd3,2'd3,2'd2,2'd1,2'd2,2'd3,2'd3,2'd2,2'd1,2'd1,2'd0,2'd0},
@@ -195,7 +197,7 @@ module vga_ball (
 
 	localparam logic [1:0] GHOST_DOWN [0:15][0:15] = '{
      '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
+    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0},
     '{2'd0,2'd0,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd0,2'd0},
