@@ -187,6 +187,25 @@ void update_all_to_driver() {
     if (ioctl(vga_ball_fd, VGA_BALL_WRITE_ALL, &state)) {
         perror("ioctl(VGA_BALL_WRITE_ALL) failed");
     }
+
+
+
+    // printf all content for debugging
+    printf("=== State Debug ===\n");
+    printf("Score: %d\n", state.score);
+    printf("Control: 0x%02X\n", state.control);
+    for (int i = 0; i < 5; i++) {
+        printf("Sprite %d: x=%d, y=%d, frame=%d, visible=%d, direction=%d, type_id=%d\n",
+               i,
+               state.sprites[i].x,
+               state.sprites[i].y,
+               state.sprites[i].frame,
+               state.sprites[i].visible,
+               state.sprites[i].direction,
+               state.sprites[i].type_id);
+    }
+    printf("Pellet to eat: %d\n", state.pellet_to_eat);
+    printf("====================\n");
 }
 
 // 工具函数
