@@ -182,7 +182,7 @@ void update_all_to_driver() {
 
     state.pellet_to_eat = last_pellet_index;
     last_pellet_index = PELLET_NONE;
-    
+
     if (ioctl(vga_ball_fd, VGA_BALL_WRITE_ALL, &state)) {
         perror("ioctl(VGA_BALL_WRITE_ALL) failed");
     }
@@ -329,7 +329,7 @@ void update_ghosts() {
             g->y = new_y;
         } else {
             // 不能前进就随机换一个方向（避开死循环）
-            g->dir = (g->dir + 1 + (rand() % 3)) % 4;
+            g->dir = (g->dir + 1) % 4;
         }
 
         // 更新 sprite 位置
