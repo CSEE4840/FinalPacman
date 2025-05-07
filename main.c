@@ -26,6 +26,9 @@
 #define CTRL_VBLANK_ACK  (1 << 3)
 #define CTRL_GAME_OVER   (1 << 4)
 
+#define PELLET_NONE 0xFFFF
+uint16_t last_pellet_index = PELLET_NONE;
+
 typedef struct {
     uint8_t x, y;
     uint8_t frame;
@@ -119,6 +122,7 @@ typedef struct {
 #define SPRITE_GHOST_2 3
 #define SPRITE_GHOST_3 4
 
+
 // 模拟RAM
 uint8_t fake_tilemap[40 * 30];
 uint32_t fake_pellet_ram[30];
@@ -176,6 +180,9 @@ void update_all_to_driver() {
     state.score = * SCORE_REG;
     state.control = *CONTROL_REG;
 
+    state.pellet_to_eat = last_pellet_index;
+    last_pellet_index = PELLET_NONE;
+    
     if (ioctl(vga_ball_fd, VGA_BALL_WRITE_ALL, &state)) {
         perror("ioctl(VGA_BALL_WRITE_ALL) failed");
     }
@@ -228,14 +235,23 @@ void update_pacman() {
 
     int tile_x = pacman_x / TILE_WIDTH;
     int tile_y = pacman_y / TILE_HEIGHT;
+    // if (get_pellet_bit(tile_x, tile_y)) {
+    //     clear_pellet_bit(tile_x, tile_y);
+    //     set_tile(tile_x, tile_y, 0);
+    //     score += 10;
+    //     *SCORE_REG = generate_packed_score(score);
+    //     printf("[Pac-Man] Ate pellet at (%d, %d). Score = %d\n", tile_x, tile_y, score);
+    // }
     if (get_pellet_bit(tile_x, tile_y)) {
         clear_pellet_bit(tile_x, tile_y);
         set_tile(tile_x, tile_y, 0);
         score += 10;
         *SCORE_REG = generate_packed_score(score);
+        last_pellet_index = tile_y * SCREEN_WIDTH_TILES + tile_x;
         printf("[Pac-Man] Ate pellet at (%d, %d). Score = %d\n", tile_x, tile_y, score);
+    } else {
+        last_pellet_index = PELLET_NONE;
     }
-
     sprite_t* pac = &sprites[SPRITE_PACMAN];
     pac->x = pacman_x;
     pac->y = pacman_y;

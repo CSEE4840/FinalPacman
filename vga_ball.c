@@ -15,6 +15,7 @@
 #define SPRITE_DESC_OFFSET(i)  (dev.virtbase + (i) * 8)
 #define SCORE_REG_OFFSET       (dev.virtbase + 0x28)
 #define CONTROL_REG_OFFSET     (dev.virtbase + 0x2B)
+#define PELLETE_EAT_REG_OFFSET (dev.virtbase + 0x2C)
 
 #define NUM_SPRITES 5
 
@@ -39,6 +40,7 @@ static void write_all_state(vga_all_state_t *state) {
     }
     iowrite16(state->score, SCORE_REG_OFFSET);
     iowrite8(state->control, CONTROL_REG_OFFSET);
+    iowrite16(state->pellet_to_eat, PELLETE_EAT_REG_OFFSET);
 }
 
 static void read_all_state(vga_all_state_t *state) {
@@ -56,6 +58,7 @@ static void read_all_state(vga_all_state_t *state) {
     }
     state->score = ioread16(SCORE_REG_OFFSET);
     state->control = ioread8(CONTROL_REG_OFFSET);
+    state->pellet_to_eat = ioread16(PELLETE_EAT_REG_OFFSET);
 }
 
 static long vga_ball_ioctl(struct file *f, unsigned int cmd, unsigned long arg) {

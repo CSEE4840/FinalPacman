@@ -27,6 +27,7 @@ struct vga_all_state {
     struct sprite_desc sprites[5]; // Pac-Man + 4 ghosts
     __u16 score;
     __u8 control;
+    __u16 pellet_to_eat;
 };
 
 typedef struct sprite_desc sprite_desc_t;
