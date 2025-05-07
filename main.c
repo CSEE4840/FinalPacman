@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <libusb-1.0/libusb.h>
 
 #define WIDTH 640
@@ -509,6 +510,9 @@ void game_init() {
 //         usleep(100000);
 //     }
 // }
+int abs(int value) {
+    return value < 0 ? -value : value;
+}
 bool check_gameover() {
     for (int i = 0; i < NUM_GHOSTS; i++) {
         int dx = abs(pacman_x - ghosts[i].x);
