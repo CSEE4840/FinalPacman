@@ -663,6 +663,7 @@ int main() {
         game_init();
         printf("Starting game loop...\n");
         game_loop();
+        print_tilemap();
     
     }
 
