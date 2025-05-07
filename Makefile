@@ -10,19 +10,19 @@ else
 	KERNEL_SOURCE := /usr/src/linux-headers-$(shell uname -r)
         PWD := $(shell pwd)
 
-default: module hello
+default: module main
 
 module:
 	${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} modules
 
-hello: hello.c usbkeyboard.c
-	$(CC) -Wall -o hello hello.c usbkeyboard.c -lusb-1.0
+main: main.c usbkeyboard.c
+	$(CC) -Wall -o main main.c usbkeyboard.c -lusb-1.0
 
 clean:
 	${MAKE} -C ${KERNEL_SOURCE} SUBDIRS=${PWD} clean
-	${RM} hello
+	${RM} main
 
-TARFILES = Makefile README vga_ball.h vga_ball.c hello.c
+TARFILES = Makefile README vga_ball.h vga_ball.c main.c
 TARFILE = lab3-sw.tar.gz
 .PHONY : tar
 tar : $(TARFILE)
