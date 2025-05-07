@@ -263,6 +263,19 @@ void print_tilemap() {
     printf("====================\n");
 }
 
+
+
+bool is_tile_occupied_by_other_ghost(int gx, int gy, int self_index) {
+    for (int i = 0; i < NUM_GHOSTS; i++) {
+        if (i == self_index) continue; // 不检查自己
+        int other_tx = ghosts[i].x / TILE_WIDTH;
+        int other_ty = ghosts[i].y / TILE_HEIGHT;
+        if (other_tx == gx && other_ty == gy) {
+            return true;
+        }
+    }
+    return false;
+}
 void update_ghosts() {
     static int ghost_tick = 0;
     ghost_tick++;
@@ -272,18 +285,29 @@ void update_ghosts() {
         ghost_t* g = &ghosts[i];
         int new_x = g->x;
         int new_y = g->y;
+
+        // 计算目标 tile
+        int new_tx = g->x / TILE_WIDTH;
+        int new_ty = g->y / TILE_HEIGHT;
+
         switch (g->dir) {
-            case 0: new_y -= TILE_HEIGHT; break;
-            case 1: new_x -= TILE_WIDTH; break;
-            case 2: new_y += TILE_HEIGHT; break;
-            case 3: new_x += TILE_WIDTH; break;
+            case 0: new_y -= TILE_HEIGHT; new_ty--; break;
+            case 1: new_x -= TILE_WIDTH;  new_tx--; break;
+            case 2: new_y += TILE_HEIGHT; new_ty++; break;
+            case 3: new_x += TILE_WIDTH;  new_tx++; break;
         }
-        if (can_move_to(new_x, new_y)) {
+
+        // 判断是否能移动且目标 tile 未被其他幽灵占用
+        if (can_move_to(new_x, new_y) &&
+            !is_tile_occupied_by_other_ghost(new_tx, new_ty, i)) {
             g->x = new_x;
             g->y = new_y;
         } else {
-            g->dir = (g->dir + 1) % 4;
+            // 不能前进就随机换一个方向（避开死循环）
+            g->dir = (g->dir + 1 + (rand() % 3)) % 4;
         }
+
+        // 更新 sprite 位置
         g->sprite->x = g->x;
         g->sprite->y = g->y;
     }
