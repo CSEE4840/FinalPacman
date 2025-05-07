@@ -39,6 +39,8 @@ module vga_ball (
     reg [9:0] pacman_x;
     reg [9:0] pacman_y;
     reg [2:0] pacman_dir;
+    reg [12:0] trigger_tile_index;
+
 
     // Ghosts: 4 ghosts
     reg [9:0] ghost_x[0:3];
@@ -54,7 +56,7 @@ always @(posedge clk or posedge reset) begin
         pacman_x <= 340;
         pacman_y <= 240;
         pacman_dir <= DIR_RIGHT;
-
+	score <= 0;
         ghost_x[0] <= 100; ghost_y[0] <= 100; ghost_dir[0] <= DIR_LEFT;
         ghost_x[1] <= 200; ghost_y[1] <= 100; ghost_dir[1] <= DIR_RIGHT;
         ghost_x[2] <= 300; ghost_y[2] <= 100; ghost_dir[2] <= DIR_UP;
@@ -71,6 +73,8 @@ always @(posedge clk or posedge reset) begin
                     pacman_y <= writedata[15:8];
                 end
                 5'd3: pacman_dir <= writedata[2:0];
+		5'd4: trigger_tile_index <= writedata[12:0];  
+
             endcase
         end
 
@@ -85,6 +89,14 @@ always @(posedge clk or posedge reset) begin
             ghost_dir[2] <= ghost_dir[2] + 1;
             ghost_dir[3] <= ghost_dir[3] + 1;
         end
+		wire [6:0] pac_tile_x = pacman_x[9:3];
+		wire [6:0] pac_tile_y = pacman_y[9:3];
+		wire [12:0] pacman_tile_index = pac_tile_y * 80 + pac_tile_x;
+		
+		if (pacman_tile_index == trigger_tile_index) begin
+		    tile[trigger_tile_index] <= 12'h03;
+		end
+
     end
 end
 
@@ -93,8 +105,11 @@ end
     reg [11:0] tile[0:4799];
     reg [7:0] tile_bitmaps[0:8191];
     reg [7:0] char_bitmaps[0:575];
+    reg [7:0] score;
+
     integer i;
     integer base_tile;
+    integer d0, d1, d2, d3;
     initial begin
         $readmemh("map.vh", tile);
         $readmemh("tiles.vh", tile_bitmaps);
@@ -126,6 +141,34 @@ end
             tile_bitmaps[1008 * 8 + i] = char_bitmaps[4  * 16 + i];
             tile_bitmaps[1009 * 8 + i] = char_bitmaps[4  * 16 + i + 8];
         end
+		d3 = score / 1000;
+		d2 = (score % 1000) / 100;
+		d1 = (score % 100) / 10;
+		d0 = score % 10;
+		
+		integer base_score_tile = 1000;
+		
+		tile[base_score_tile + 0]  = 12'd1010;
+		tile[base_score_tile + 1]  = 12'd1011;
+		tile[base_score_tile + 2]  = 12'd1012;
+		tile[base_score_tile + 3]  = 12'd1013;
+		tile[base_score_tile + 80] = 12'd1014;
+		tile[base_score_tile + 81] = 12'd1015;
+		tile[base_score_tile + 82] = 12'd1016;
+		tile[base_score_tile + 83] = 12'd1017;
+		
+		for (i = 0; i < 8; i++) begin
+		    tile_bitmaps[1010*8 + i] = char_bitmaps[(48 + d3)*16 + i];
+		    tile_bitmaps[1011*8 + i] = char_bitmaps[(48 + d2)*16 + i];
+		    tile_bitmaps[1012*8 + i] = char_bitmaps[(48 + d1)*16 + i];
+		    tile_bitmaps[1013*8 + i] = char_bitmaps[(48 + d0)*16 + i];
+		
+		    tile_bitmaps[1014*8 + i] = char_bitmaps[(48 + d3)*16 + i + 8];
+		    tile_bitmaps[1015*8 + i] = char_bitmaps[(48 + d2)*16 + i + 8];
+		    tile_bitmaps[1016*8 + i] = char_bitmaps[(48 + d1)*16 + i + 8];
+		    tile_bitmaps[1017*8 + i] = char_bitmaps[(48 + d0)*16 + i + 8];
+end
+
     end
 
     // Pac-Man sprites
@@ -292,12 +335,13 @@ end
         if (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
             vcount >= pacman_y && vcount < pacman_y + 16) begin
             case (pacman_dir)
-		    DIR_UP:    if (pacman_up[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])     {VGA_R, VGA_G} = 16'hFFFF;
-		    DIR_RIGHT: if (pacman_right[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])  {VGA_R, VGA_G} = 16'hFFFF;
-		    DIR_DOWN:  if (pacman_down[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])   {VGA_R, VGA_G} = 16'hFFFF;
-		    DIR_LEFT:  if (pacman_left[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])   {VGA_R, VGA_G} = 16'hFFFF;
-		    DIR_EAT:   if (pacman_eat[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])    {VGA_R, VGA_G} = 16'hFFFF;
+		    DIR_UP:    if (pacman_up[...]     ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
+		    DIR_RIGHT: if (pacman_right[...]  ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
+		    DIR_DOWN:  if (pacman_down[...]   ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
+		    DIR_LEFT:  if (pacman_left[...]   ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
+		    DIR_EAT:   if (pacman_eat[...]    ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
 	   endcase
+
 
         end
     end
