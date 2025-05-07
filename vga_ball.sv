@@ -33,12 +33,12 @@ module vga_ball (
     );
 
     // Direction encoding
-    localparam DIR_UP = 2'd0, DIR_RIGHT = 2'd1, DIR_DOWN = 2'd2, DIR_LEFT = 2'd3;
+    localparam DIR_UP = 3'd0, DIR_RIGHT = 3'd1, DIR_DOWN = 3'd2, DIR_LEFT = 3'd3, DIR_EAT = 3'd4;
 
     // Pac-Man position and direction
     reg [9:0] pacman_x;
     reg [9:0] pacman_y;
-    reg [1:0] pacman_dir;
+    reg [2:0] pacman_dir;
 
     // Ghosts: 4 ghosts
     reg [9:0] ghost_x[0:3];
@@ -92,7 +92,7 @@ module vga_ball (
     reg [7:0] tile_bitmaps[0:8191];
     reg [7:0] char_bitmaps[0:575];
     integer i;
-integer base_tile;
+    integer base_tile;
     initial begin
         $readmemh("map.vh", tile);
         $readmemh("tiles.vh", tile_bitmaps);
@@ -133,6 +133,7 @@ integer base_tile;
         $readmemh("pacman_right.vh", pacman_right);
         $readmemh("pacman_down.vh",  pacman_down);
         $readmemh("pacman_left.vh",  pacman_left);
+	$readmemh("pacman_eat.vh",  pacman_eat);
     end
 
     // Ghost shared sprite
@@ -243,8 +244,13 @@ integer base_tile;
         VGA_B = 0;
 
         // Tile background
-        if (pixel_on)
-            VGA_B = 8'hFF;
+        if (pixel_on) begin
+    		if (tile_id == 12'h0A || (tile_index >= 980 && tile_index <= 980 + 84))
+        		{VGA_R, VGA_G, VGA_B} = 24'hFFFFFF; // white
+    		else
+        		VGA_B = 8'hFF; // blue
+	end
+
 
         // Ghosts
         for (gi = 0; gi < 4; gi = gi + 1) begin
@@ -284,11 +290,13 @@ integer base_tile;
         if (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
             vcount >= pacman_y && vcount < pacman_y + 16) begin
             case (pacman_dir)
-                DIR_UP:    if (pacman_up[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin VGA_R = 8'hFF; VGA_G = 8'hFF; end
-                DIR_RIGHT: if (pacman_right[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin VGA_R = 8'hFF; VGA_G = 8'hFF; end
-                DIR_DOWN:  if (pacman_down[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin VGA_R = 8'hFF; VGA_G = 8'hFF; end
-                DIR_LEFT:  if (pacman_left[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)]) begin VGA_R = 8'hFF; VGA_G = 8'hFF; end
-            endcase
+		    DIR_UP:    if (pacman_up[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])     {VGA_R, VGA_G} = 16'hFFFF;
+		    DIR_RIGHT: if (pacman_right[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])  {VGA_R, VGA_G} = 16'hFFFF;
+		    DIR_DOWN:  if (pacman_down[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])   {VGA_R, VGA_G} = 16'hFFFF;
+		    DIR_LEFT:  if (pacman_left[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])   {VGA_R, VGA_G} = 16'hFFFF;
+		    DIR_EAT:   if (pacman_eat[vcount - pacman_y][15 - (hcount[10:1] - pacman_x)])    {VGA_R, VGA_G} = 16'hFFFF;
+	   endcase
+
         end
     end
 
