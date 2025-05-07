@@ -338,21 +338,24 @@ always @(*) begin
     end
 
     // -------------------------
-    // 2. Pac-Man overlay
+    // 2. Pac-Man pixel row decode (MUST BE OUTSIDE case expression)
+    // -------------------------
+    pacman_row = 32'b0;
+    if (vcount >= pacman_y && vcount < pacman_y + 16) begin
+        case (pacman_dir)
+            DIR_UP:    pacman_row = pacman_up[vcount - pacman_y];
+            DIR_RIGHT: pacman_row = pacman_right[vcount - pacman_y];
+            DIR_DOWN:  pacman_row = pacman_down[vcount - pacman_y];
+            DIR_LEFT:  pacman_row = pacman_left[vcount - pacman_y];
+            DIR_EAT:   pacman_row = pacman_eat[vcount - pacman_y];
+        endcase
+    end
+
+    // -------------------------
+    // 3. Pac-Man overlay
     // -------------------------
     if (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
         vcount >= pacman_y && vcount < pacman_y + 16) begin
-
-        // screen-to-Pacman pixel coordinate
-        pacman_row = case (pacman_dir)
-            DIR_UP:    pacman_up[vcount - pacman_y];
-            DIR_RIGHT: pacman_right[vcount - pacman_y];
-            DIR_DOWN:  pacman_down[vcount - pacman_y];
-            DIR_LEFT:  pacman_left[vcount - pacman_y];
-            DIR_EAT:   pacman_eat[vcount - pacman_y];
-            default:   32'b0;
-        endcase;
-
         if (pacman_row[15 - (hcount[10:1] - pacman_x)]) begin
             VGA_R = 8'hFF;
             VGA_G = 8'hFF;
@@ -361,7 +364,7 @@ always @(*) begin
     end
 
     // -------------------------
-    // 3. Ghost overlay
+    // 4. Ghost overlay
     // -------------------------
     for (gi = 0; gi < 4; gi = gi + 1) begin
         if (hcount[10:1] >= ghost_x[gi] && hcount[10:1] < ghost_x[gi] + 16 &&
@@ -393,6 +396,7 @@ always @(*) begin
         end
     end
 end
+
 
 
 endmodule
