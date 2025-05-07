@@ -583,7 +583,7 @@ void game_loop() {
         update_ghosts();
 
         print_tilemap();
-        
+
         // 检查 Game Over 条件
         if (check_gameover()) {
             *CONTROL_REG |= CTRL_GAME_OVER;
@@ -610,7 +610,7 @@ void game_loop() {
                         }
                     }
                 }
-                usleep(100000);
+                usleep(1000000);
             }
             return;  // reset 被设置，退出 game_loop()，由 main() 重启游戏
         }
