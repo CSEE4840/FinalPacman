@@ -283,68 +283,79 @@ end
     reg [1:0] ghost_pixel;
     reg [1:0] pacman_pixel;
     // VGA pixel output with ghost overlay
-    always @(*) begin
-        VGA_R = 0;
-        VGA_G = 0;
-        VGA_B = 0;
+always @(*) begin
+    // Default: black screen
+    VGA_R = 0;
+    VGA_G = 0;
+    VGA_B = 0;
 
-        // Tile background
-        if (pixel_on) begin
-    		if (tile_id == 12'h0A || (tile_index >= 980 && tile_index <= 980 + 84))
-        		{VGA_R, VGA_G, VGA_B} = 24'hFFFFFF; // white
-    		else
-        		VGA_B = 8'hFF; // blue
-	end
+    // -------------------------
+    // 1. Background tile color
+    // -------------------------
+    if (pixel_on) begin
+        if (tile_id == 12'h0A || (tile_index >= 980 && tile_index <= 980 + 84))
+            {VGA_R, VGA_G, VGA_B} = 24'hFFFFFF;  // white
+        else
+            VGA_B = 8'hFF;  // blue background
+    end
 
+    // -------------------------
+    // 2. Pac-Man overlay
+    // -------------------------
+    if (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
+        vcount >= pacman_y && vcount < pacman_y + 16) begin
 
-        // Ghosts
-        for (gi = 0; gi < 4; gi = gi + 1) begin
-            if (hcount[10:1] >= ghost_x[gi] && hcount[10:1] < ghost_x[gi] + 16 &&
-                vcount           >= ghost_y[gi] && vcount           < ghost_y[gi] + 16) begin
+        // screen-to-Pacman pixel coordinate
+        pacman_row = case (pacman_dir)
+            DIR_UP:    pacman_up[vcount - pacman_y];
+            DIR_RIGHT: pacman_right[vcount - pacman_y];
+            DIR_DOWN:  pacman_down[vcount - pacman_y];
+            DIR_LEFT:  pacman_left[vcount - pacman_y];
+            DIR_EAT:   pacman_eat[vcount - pacman_y];
+            default:   32'b0;
+        endcase;
 
-                // compute local coordinates
-                gx = hcount[10:1] - ghost_x[gi];
-                gy = vcount           - ghost_y[gi];
-
-                // pick the right row/column from the ghost sprite
-                case (ghost_dir[gi])
-                    DIR_UP:    ghost_pixel = GHOST_UP[gy][gx];
-                    DIR_DOWN:  ghost_pixel = GHOST_DOWN[gy][gx];
-                    DIR_LEFT:  ghost_pixel = GHOST_LEFT[gy][gx];
-                    DIR_RIGHT: ghost_pixel = GHOST_RIGHT[gy][gx];
-                    default:   ghost_pixel = 2'b00;
-                endcase
-
-                // overlay the ghost pixel
-                case (ghost_pixel)
-                    2'b01: begin
-                        case (gi)
-                            0: begin VGA_R = 8'hFF; VGA_G = 0;     VGA_B = 0;     end // Red
-                            1: begin VGA_R = 8'hFF; VGA_G = 8'hAA; VGA_B = 8'hFF; end // Pink
-                            2: begin VGA_R = 8'hFF; VGA_G = 8'hAA; VGA_B = 0;     end // Orange
-                            3: begin VGA_R = 0;     VGA_G = 8'hFF; VGA_B = 8'hFF; end // Light Blue
-                        endcase
-                    end
-                    2'b10: begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'hFF; end // White
-                    2'b11: begin VGA_R = 0;     VGA_G = 0;     VGA_B = 8'h88; end // Dark Blue
-                endcase
-            end
-        end
-
-        // Pac-Man (always yellow)
-        if (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
-            vcount >= pacman_y && vcount < pacman_y + 16) begin
-            case (pacman_dir)
-		    DIR_UP:    if (pacman_up[...]     ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
-		    DIR_RIGHT: if (pacman_right[...]  ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
-		    DIR_DOWN:  if (pacman_down[...]   ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
-		    DIR_LEFT:  if (pacman_left[...]   ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
-		    DIR_EAT:   if (pacman_eat[...]    ) begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'h00; end
-	   endcase
-
-
+        if (pacman_row[15 - (hcount[10:1] - pacman_x)]) begin
+            VGA_R = 8'hFF;
+            VGA_G = 8'hFF;
+            VGA_B = 8'h00; // Yellow Pac-Man
         end
     end
+
+    // -------------------------
+    // 3. Ghost overlay
+    // -------------------------
+    for (gi = 0; gi < 4; gi = gi + 1) begin
+        if (hcount[10:1] >= ghost_x[gi] && hcount[10:1] < ghost_x[gi] + 16 &&
+            vcount >= ghost_y[gi] && vcount < ghost_y[gi] + 16) begin
+
+            gx = hcount[10:1] - ghost_x[gi];
+            gy = vcount - ghost_y[gi];
+
+            case (ghost_dir[gi])
+                DIR_UP:    ghost_pixel = GHOST_UP[gy][gx];
+                DIR_DOWN:  ghost_pixel = GHOST_DOWN[gy][gx];
+                DIR_LEFT:  ghost_pixel = GHOST_LEFT[gy][gx];
+                DIR_RIGHT: ghost_pixel = GHOST_RIGHT[gy][gx];
+                default:   ghost_pixel = 2'b00;
+            endcase
+
+            case (ghost_pixel)
+                2'b01: begin
+                    case (gi)
+                        0: begin VGA_R = 8'hFF; VGA_G = 0;     VGA_B = 0;     end // Red
+                        1: begin VGA_R = 8'hFF; VGA_G = 8'hAA; VGA_B = 8'hFF; end // Pink
+                        2: begin VGA_R = 8'hFF; VGA_G = 8'hAA; VGA_B = 0;     end // Orange
+                        3: begin VGA_R = 0;     VGA_G = 8'hFF; VGA_B = 8'hFF; end // Light Blue
+                    endcase
+                end
+                2'b10: begin VGA_R = 8'hFF; VGA_G = 8'hFF; VGA_B = 8'hFF; end // White
+                2'b11: begin VGA_R = 0;     VGA_G = 0;     VGA_B = 8'h88; end // Dark Blue
+            endcase
+        end
+    end
+end
+
 
 endmodule
 
