@@ -1,47 +1,3 @@
-Info: *******************************************************************
-Info: Running Quartus Prime Generate HDL Interface
-Info:     Version 21.1.0 Build 842 10/21/2021 SJ Lite Edition
-Info:     Copyright (C) 2021  Intel Corporation. All rights reserved.
-Info:     Your use of Intel Corporation's design tools, logic functions 
-Info:     and other software and tools, and any partner logic 
-Info:     functions, and any output files from any of the foregoing 
-Info:     (including device programming or simulation files), and any 
-Info:     associated documentation or information are expressly subject 
-Info:     to the terms and conditions of the Intel Program License 
-Info:     Subscription Agreement, the Intel Quartus Prime License Agreement,
-Info:     the Intel FPGA IP License Agreement, or other applicable license
-Info:     agreement, including, without limitation, that your use is for
-Info:     the sole purpose of programming logic devices manufactured by
-Info:     Intel and sold by Intel or its authorized distributors.  Please
-Info:     refer to the applicable agreement for further details, at
-Info:     https://fpgasoftware.intel.com/eula.
-Info:     Processing started: Wed May  7 13:47:17 2025
-Info: Command: quartus_map not_a_project --generate_hdl_interface=/homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv --source=/homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv --set=HDL_INTERFACE_OUTPUT_PATH=/tmp/alt0215_5413013970522496691.dir/0002_sopcqmap/ --ini=disable_check_quartus_compatibility_qsys_only=on
-Error: Verilog HDL syntax error at vga_ball.sv(307) near text: "case";  expecting an operand. Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 307
-Error: Verilog HDL syntax error at vga_ball.sv(308) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 308
-Error: Verilog HDL syntax error at vga_ball.sv(309) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 309
-Error: Verilog HDL syntax error at vga_ball.sv(310) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 310
-Error: Verilog HDL syntax error at vga_ball.sv(311) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 311
-Error: Verilog HDL syntax error at vga_ball.sv(312) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 312
-Error: Verilog HDL syntax error at vga_ball.sv(313) near text: ";";  expecting ":", or ",". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 313
-Error: Verilog HDL syntax error at vga_ball.sv(355) near text: "end";  expecting "endmodule". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 355
-Error: Ignored design unit "vga_ball" at vga_ball.sv(1) due to previous errors File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 1
-Error: Ignored design unit "vga_counters" at vga_ball.sv(363) due to previous errors File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 363
-Warning: Quartus Prime Generate HDL Interface was unsuccessful. 10 errors, 0 warnings
-Error:     Peak virtual memory: 889 megabytes
-Error:     Processing ended: Wed May  7 13:47:18 2025
-Error:     Elapsed time: 00:00:01
-Error:     Total CPU time (on all processors): 00:00:00
-Error: No modules found when analyzing null.
-
-
-
-/*
- * Avalon memory-mapped peripheral that generates VGA
- *
- * Stephen A. Edwards
- * Columbia University
- */
 module vga_ball (
     input clk,
     input reset,
@@ -87,7 +43,41 @@ module vga_ball (
 
     // 1Hz auto-rotate
     reg [25:0] second_counter;
+	wire [6:0] pac_tile_x;
+	wire [6:0] pac_tile_y;
+	wire [12:0] pacman_tile_index;
+    reg [11:0] tile[0:4799];
+    reg [7:0] tile_bitmaps[0:8191];
+    reg [7:0] char_bitmaps[0:575];
+    reg [7:0] score;
 
+    integer i;
+    integer base_tile;
+    integer d0, d1, d2, d3;
+    integer base_score_tile;
+    reg [31:0] pacman_up[0:15], pacman_right[0:15], pacman_down[0:15], pacman_left[0:15], pacman_eat[0:15]; 
+   wire [6:0] tile_x = hcount[10:4];
+    wire [6:0] tile_y = vcount[9:3];
+    wire [2:0] tx = hcount[3:1];
+    wire [2:0] ty = vcount[2:0];
+
+    wire [12:0] tile_index = tile_y * 80 + tile_x;
+    wire [11:0] tile_id = tile[tile_index];
+    wire [7:0] bitmap_row = tile_bitmaps[tile_id * 8 + ty];
+    wire pixel_on = bitmap_row[7 - tx];
+
+    // Pac-Man render
+    wire [3:0] pacman_x16 = hcount[10:1] - pacman_x;
+    wire [3:0] pacman_y16 = vcount - pacman_y;
+    wire on_pacman = (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
+                      vcount >= pacman_y && vcount < pacman_y + 16);
+
+    reg [31:0] pacman_row;
+        integer gi;
+    integer gx;
+    integer gy;
+    reg [1:0] ghost_pixel;
+    reg [1:0] pacman_pixel;
 always @(posedge clk or posedge reset) begin
     if (reset) begin
         second_counter <= 0;
@@ -127,9 +117,9 @@ always @(posedge clk or posedge reset) begin
             ghost_dir[2] <= ghost_dir[2] + 1;
             ghost_dir[3] <= ghost_dir[3] + 1;
         end
-		wire [6:0] pac_tile_x = pacman_x[9:3];
-		wire [6:0] pac_tile_y = pacman_y[9:3];
-		wire [12:0] pacman_tile_index = pac_tile_y * 80 + pac_tile_x;
+		pac_tile_x = pacman_x[9:3];
+		pac_tile_y = pacman_y[9:3];
+		pacman_tile_index = pac_tile_y * 80 + pac_tile_x;
 		
 		if (pacman_tile_index == trigger_tile_index) begin
 		    tile[trigger_tile_index] <= 12'h03;
@@ -140,14 +130,7 @@ end
 
 
     // Tile and character memory
-    reg [11:0] tile[0:4799];
-    reg [7:0] tile_bitmaps[0:8191];
-    reg [7:0] char_bitmaps[0:575];
-    reg [7:0] score;
-
-    integer i;
-    integer base_tile;
-    integer d0, d1, d2, d3;
+    
     initial begin
         $readmemh("map.vh", tile);
         $readmemh("tiles.vh", tile_bitmaps);
@@ -179,38 +162,26 @@ end
             tile_bitmaps[1008 * 8 + i] = char_bitmaps[4  * 16 + i];
             tile_bitmaps[1009 * 8 + i] = char_bitmaps[4  * 16 + i + 8];
         end
-		d3 = score / 1000;
-		d2 = (score % 1000) / 100;
-		d1 = (score % 100) / 10;
-		d0 = score % 10;
+	    d3 = score / 1000;
+	    d2 = (score % 1000) / 100;
+	    d1 = (score % 100) / 10;
+	    d0 = score % 10;
 		
-		integer base_score_tile = 1000;
+	    base_score_tile = 1000;
 		
-		tile[base_score_tile + 0]  = 12'd1010;
-		tile[base_score_tile + 1]  = 12'd1011;
-		tile[base_score_tile + 2]  = 12'd1012;
-		tile[base_score_tile + 3]  = 12'd1013;
-		tile[base_score_tile + 80] = 12'd1014;
-		tile[base_score_tile + 81] = 12'd1015;
-		tile[base_score_tile + 82] = 12'd1016;
-		tile[base_score_tile + 83] = 12'd1017;
-		
-		for (i = 0; i < 8; i++) begin
-		    tile_bitmaps[1010*8 + i] = char_bitmaps[(48 + d3)*16 + i];
-		    tile_bitmaps[1011*8 + i] = char_bitmaps[(48 + d2)*16 + i];
-		    tile_bitmaps[1012*8 + i] = char_bitmaps[(48 + d1)*16 + i];
-		    tile_bitmaps[1013*8 + i] = char_bitmaps[(48 + d0)*16 + i];
-		
-		    tile_bitmaps[1014*8 + i] = char_bitmaps[(48 + d3)*16 + i + 8];
-		    tile_bitmaps[1015*8 + i] = char_bitmaps[(48 + d2)*16 + i + 8];
-		    tile_bitmaps[1016*8 + i] = char_bitmaps[(48 + d1)*16 + i + 8];
-		    tile_bitmaps[1017*8 + i] = char_bitmaps[(48 + d0)*16 + i + 8];
-end
+	    tile[base_score_tile + 0]  = 12'd1010;
+	    tile[base_score_tile + 1]  = 12'd1011;
+   	    tile[base_score_tile + 2]  = 12'd1012;
+	    tile[base_score_tile + 3]  = 12'd1013;
+	    tile[base_score_tile + 80] = 12'd1014;
+	    tile[base_score_tile + 81] = 12'd1015;
+	    tile[base_score_tile + 82] = 12'd1016;
+	    tile[base_score_tile + 83] = 12'd1017;
 
     end
 
     // Pac-Man sprites
-    reg [31:0] pacman_up[0:15], pacman_right[0:15], pacman_down[0:15], pacman_left[0:15], pacman_eat[0:15];
+    
     initial begin
         $readmemh("pacman_up.vh",    pacman_up);
         $readmemh("pacman_right.vh", pacman_right);
@@ -298,28 +269,7 @@ end
 
 
     // VGA tile render
-    wire [6:0] tile_x = hcount[10:4];
-    wire [6:0] tile_y = vcount[9:3];
-    wire [2:0] tx = hcount[3:1];
-    wire [2:0] ty = vcount[2:0];
-
-    wire [12:0] tile_index = tile_y * 80 + tile_x;
-    wire [11:0] tile_id = tile[tile_index];
-    wire [7:0] bitmap_row = tile_bitmaps[tile_id * 8 + ty];
-    wire pixel_on = bitmap_row[7 - tx];
-
-    // Pac-Man render
-    wire [3:0] pacman_x16 = hcount[10:1] - pacman_x;
-    wire [3:0] pacman_y16 = vcount - pacman_y;
-    wire on_pacman = (hcount[10:1] >= pacman_x && hcount[10:1] < pacman_x + 16 &&
-                      vcount >= pacman_y && vcount < pacman_y + 16);
-
-    reg [31:0] pacman_row;
-        integer gi;
-    integer gx;
-    integer gy;
-    reg [1:0] ghost_pixel;
-    reg [1:0] pacman_pixel;
+   
     // VGA pixel output with ghost overlay
 always @(*) begin
     // Default: black screen
@@ -334,7 +284,7 @@ always @(*) begin
         if (tile_id == 12'h0A || (tile_index >= 980 && tile_index <= 980 + 84))
             {VGA_R, VGA_G, VGA_B} = 24'hFFFFFF;  // white
         else
-            VGA_B = 8'hFF;  // blue background
+        	VGA_B = 8'hFF;  // blue background
     end
 
     // -------------------------
@@ -396,8 +346,6 @@ always @(*) begin
         end
     end
 end
-
-
 
 endmodule
 
