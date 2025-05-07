@@ -417,9 +417,28 @@ void init_ghosts() {
 
 void wait_for_start_signal() {
     printf("Waiting for START signal...\n");
-    while (!is_control_flag_set(CTRL_START)) {
-        usleep(100000);
+
+    while (1) {
+        int r = libusb_interrupt_transfer(keyboard, endpoint_address,
+                                          (unsigned char *)&packet, sizeof(packet),
+                                          &transferred, 1);
+        if (r == 0 && transferred == sizeof(packet)) {
+            for (int i = 0; i < MAX_KEYS; i++) {
+                uint8_t key = packet.keycode[i];
+                if (key != 0) {
+                    char c = usb_to_ascii(key, packet.modifiers);
+                    if (c == '\n') {
+                        // 收到回车键，表示开始游戏
+                        set_control_flag(CTRL_START);
+                        printf("START signal received. Game starting...\n");
+                        return;
+                    }
+                }
+            }
+        }
+        usleep(10000); // 等待一段时间再检查
     }
+
     printf("Game started!\n");
 }
 bool paused = false;
