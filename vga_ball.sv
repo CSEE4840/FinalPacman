@@ -1,3 +1,41 @@
+Info: *******************************************************************
+Info: Running Quartus Prime Generate HDL Interface
+Info:     Version 21.1.0 Build 842 10/21/2021 SJ Lite Edition
+Info:     Copyright (C) 2021  Intel Corporation. All rights reserved.
+Info:     Your use of Intel Corporation's design tools, logic functions 
+Info:     and other software and tools, and any partner logic 
+Info:     functions, and any output files from any of the foregoing 
+Info:     (including device programming or simulation files), and any 
+Info:     associated documentation or information are expressly subject 
+Info:     to the terms and conditions of the Intel Program License 
+Info:     Subscription Agreement, the Intel Quartus Prime License Agreement,
+Info:     the Intel FPGA IP License Agreement, or other applicable license
+Info:     agreement, including, without limitation, that your use is for
+Info:     the sole purpose of programming logic devices manufactured by
+Info:     Intel and sold by Intel or its authorized distributors.  Please
+Info:     refer to the applicable agreement for further details, at
+Info:     https://fpgasoftware.intel.com/eula.
+Info:     Processing started: Wed May  7 13:47:17 2025
+Info: Command: quartus_map not_a_project --generate_hdl_interface=/homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv --source=/homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv --set=HDL_INTERFACE_OUTPUT_PATH=/tmp/alt0215_5413013970522496691.dir/0002_sopcqmap/ --ini=disable_check_quartus_compatibility_qsys_only=on
+Error: Verilog HDL syntax error at vga_ball.sv(307) near text: "case";  expecting an operand. Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 307
+Error: Verilog HDL syntax error at vga_ball.sv(308) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 308
+Error: Verilog HDL syntax error at vga_ball.sv(309) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 309
+Error: Verilog HDL syntax error at vga_ball.sv(310) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 310
+Error: Verilog HDL syntax error at vga_ball.sv(311) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 311
+Error: Verilog HDL syntax error at vga_ball.sv(312) near text: ";";  expecting ">=", or ">>=", or "++", or "--". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 312
+Error: Verilog HDL syntax error at vga_ball.sv(313) near text: ";";  expecting ":", or ",". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 313
+Error: Verilog HDL syntax error at vga_ball.sv(355) near text: "end";  expecting "endmodule". Check for and fix any syntax errors that appear immediately before or at the specified keyword. The Intel FPGA Knowledge Database contains many articles with specific details on how to resolve this error. Visit the Knowledge Database at https://www.altera.com/support/support-resources/knowledge-base/search.html and search for this specific error message number. File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 355
+Error: Ignored design unit "vga_ball" at vga_ball.sv(1) due to previous errors File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 1
+Error: Ignored design unit "vga_counters" at vga_ball.sv(363) due to previous errors File: /homes/user/stud/fall24/ty2534/Downloads/MazeGame/pacman-main/hardware/vga_ball.sv Line: 363
+Warning: Quartus Prime Generate HDL Interface was unsuccessful. 10 errors, 0 warnings
+Error:     Peak virtual memory: 889 megabytes
+Error:     Processing ended: Wed May  7 13:47:18 2025
+Error:     Elapsed time: 00:00:01
+Error:     Total CPU time (on all processors): 00:00:00
+Error: No modules found when analyzing null.
+
+
+
 /*
  * Avalon memory-mapped peripheral that generates VGA
  *
