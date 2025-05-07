@@ -78,6 +78,26 @@ module vga_ball (
     integer gy;
     reg [1:0] ghost_pixel;
     reg [1:0] pacman_pixel;
+
+//////// AUDIO ///////////////////////////////////////////////////////
+// Audio playback control
+// Wires and control flags
+logic [13:0] music_address, death_address, eat_address;
+logic [15:0] music_data, death_data, eat_data;
+
+logic playing_music, playing_death, playing_eat;
+logic music_ready, death_ready, eat_ready;
+
+logic [11:0] audio_counter;
+logic L_VALID, R_VALID;
+logic [15:0] L_DATA, R_DATA;
+
+
+
+
+//////// AUDIO ///////////////////////////////////////////////////////
+
+
 always @(posedge clk or posedge reset) begin
     if (reset) begin
         second_counter <= 0;
