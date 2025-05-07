@@ -224,7 +224,7 @@ void clear_pellet_bit(int x, int y) {
 bool can_move_to(int px, int py) {
     int tx = px / TILE_WIDTH;
     int ty = py / TILE_HEIGHT;
-    if (tx < 0 || tx >= 40 || ty < 0 || ty >= 30) return false;
+    // if (tx < 0 || tx >= 40 || ty < 0 || ty >= 30) return false;
     uint8_t tile = TILEMAP_BASE[ty * SCREEN_WIDTH_TILES + tx];
     if (tile == 0x40 || tile == 1 || tile == 0) {
         
