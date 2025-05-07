@@ -20,6 +20,12 @@
 #define INPUT_ROWS 2
 #define MAX_KEYS 6
 
+#define CTRL_START       (1 << 0)
+#define CTRL_RESET       (1 << 1)
+#define CTRL_PAUSE       (1 << 2)
+#define CTRL_VBLANK_ACK  (1 << 3)
+#define CTRL_GAME_OVER   (1 << 4)
+
 typedef struct {
     uint8_t x, y;
     uint8_t frame;
@@ -118,7 +124,7 @@ uint8_t fake_tilemap[40 * 30];
 uint32_t fake_pellet_ram[30];
 sprite_t fake_sprites[5];
 uint16_t fake_score;
-uint32_t fake_control = 1;
+uint8_t fake_control = 1;
 
 #define TILEMAP_BASE     (fake_tilemap)
 #define PELLET_RAM_BASE  (fake_pellet_ram)
@@ -133,6 +139,20 @@ int pacman_x = 15 * TILE_WIDTH + TILE_WIDTH / 2;
 int pacman_y = 23 * TILE_HEIGHT + TILE_HEIGHT / 2;
 uint8_t pacman_dir = 1; // 初始向左
 uint16_t score = 0;
+
+
+void set_control_flag(uint8_t flag) {
+    *CONTROL_REG |= flag;
+}
+
+void clear_control_flag(uint8_t flag) {
+    *CONTROL_REG &= ~flag;
+}
+
+bool is_control_flag_set(uint8_t flag) {
+    return (*CONTROL_REG & flag) != 0;
+}
+
 
 int vga_ball_fd;
 
@@ -153,7 +173,7 @@ void update_all_to_driver() {
     }
 
     state.score = score;
-    state.control = 1; // 控制位根据需要设置，比如VBLANK_ACK等
+    state.control = *CONTROL_REG;
 
     if (ioctl(vga_ball_fd, VGA_BALL_WRITE_ALL, &state)) {
         perror("ioctl(VGA_BALL_WRITE_ALL) failed");
@@ -344,8 +364,45 @@ void init_ghosts() {
     }
 }
 
+void wait_for_start_signal() {
+    printf("Waiting for START signal...\n");
+    while (!is_control_flag_set(CTRL_START)) {
+        usleep(100000);
+    }
+    printf("Game started!\n");
+}
+bool paused = false;
+
+void process_control_keys(char c) {
+    if (c == ' ') {  // 空格键切换暂停
+        paused = !paused;
+        if (paused) {
+            set_control_flag(CTRL_PAUSE);
+            printf("Game paused.\n");
+        } else {
+            clear_control_flag(CTRL_PAUSE);
+            printf("Game resumed.\n");
+        }
+    } else if (c == 'r' || c == 'R') {
+        set_control_flag(CTRL_RESET);
+        printf("Game reset signal sent.\n");
+        // 可以选择立刻退出 game_loop()，回到 main 中重新初始化
+        exit(0);
+    }
+}
+bool check_collision() {
+    for (int i = 0; i < NUM_GHOSTS; i++) {
+        if ((ghosts[i].x / TILE_WIDTH == pacman_x / TILE_WIDTH) &&
+            (ghosts[i].y / TILE_HEIGHT == pacman_y / TILE_HEIGHT)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void game_init() {
     *SCORE_REG = 0;
+    // fake_control = CTRL_START;
     game_init_playfield();
     init_ghosts();
     sprite_t* pac = &sprites[SPRITE_PACMAN];
@@ -356,19 +413,22 @@ void game_init() {
 }
 
 void game_loop() {
+    wait_for_start_signal();
     printf("Game loop started. Press ESC to exit.\n");
-    uint8_t prev_keys[MAX_KEYS] = {0};
-    int transferred;
 
+    int transferred;
     while (1) {
         int r = libusb_interrupt_transfer(keyboard, endpoint_address,
                                           (unsigned char *)&packet, sizeof(packet),
-                                          &transferred, 0);
+                                          &transferred, 1);
+
         if (r == 0 && transferred == sizeof(packet)) {
             for (int i = 0; i < MAX_KEYS; i++) {
                 uint8_t key = packet.keycode[i];
                 if (key != 0) {
-                    handle_input(usb_to_ascii(key, packet.modifiers));
+                    char c = usb_to_ascii(key, packet.modifiers);
+                    handle_input(c);
+                    process_control_keys(c);
                 }
             }
             if (packet.keycode[0] == 0x29) { // ESC退出
@@ -377,15 +437,25 @@ void game_loop() {
             }
         }
 
+        if (paused || is_control_flag_set(CTRL_PAUSE)) {
+            usleep(100000);
+            continue;
+        }
+
         update_pacman();
-        print_tilemap();
         update_ghosts();
+
+        if (check_collision()) {
+            set_control_flag(CTRL_GAME_OVER);
+            printf("Game Over! Pac-Man was caught by a ghost.\n");
+            break;
+        }
+
         update_all_to_driver(); 
+        print_tilemap();
         usleep(100000);
-        while (!(*CONTROL_REG & 0x1)) {}
     }
 }
-
 
 
 
