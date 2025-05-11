@@ -195,7 +195,7 @@ void update_all_to_driver() {
     if (last_pellet_index != PELLET_NONE) {
         int pellet_x = last_pellet_index % SCREEN_WIDTH_TILES;
         int pellet_y = last_pellet_index / SCREEN_WIDTH_TILES;
-        state.pellet_to_eat = pellet_y * 80 + pellet_x + 6;
+        state.pellet_to_eat = pellet_y * 80 + pellet_x + 6 + 1220;
     } else {
         state.pellet_to_eat = 0xFFFF; // 无效值
     }
