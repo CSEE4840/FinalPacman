@@ -349,61 +349,92 @@ void update_ghosts() {
 
     for (int i = 0; i < NUM_GHOSTS; i++) {
         ghost_t* g = &ghosts[i];
+        int best_dir = g->dir;
+        int best_dist = 1 << 30; // 初始为超大值
 
-        int best_dir = g->dir;  // 默认向前
-        int min_dist = 1 << 30;
+        // 当前 tile
+        int curr_tx = g->x / TILE_WIDTH;
+        int curr_ty = g->y / TILE_HEIGHT;
 
-        // ε-greedy：20% 概率选随机动作
-        bool random_action = ((float)rand() / RAND_MAX) < EPSILON;
+        // 目标 tile计算（根据不同策略）
+        int target_x = pacman_x, target_y = pacman_y;
 
-        if (!random_action) {
-            // 选择最优方向：使 Manhattan 距离最小
-            for (int d = 0; d < 4; d++) {
-                int nx = g->x, ny = g->y;
-                switch (d) {
-                    case 0: ny -= step_size; break;
-                    case 1: nx -= step_size; break;
-                    case 2: ny += step_size; break;
-                    case 3: nx += step_size; break;
-                }
-
-                int tx = nx / TILE_WIDTH;
-                int ty = ny / TILE_HEIGHT;
-
-                if (can_move_to(nx, ny) && !is_tile_occupied_by_other_ghost(tx, ty, i)) {
-                    int dist = manhattan_distance(nx, ny, pacman_x, pacman_y);
-                    if (dist < min_dist) {
-                        min_dist = dist;
-                        best_dir = d;
-                    }
-                }
+        if (i == 0) {
+            // Blinky: 追踪 Pac-Man
+            target_x = pacman_x;
+            target_y = pacman_y;
+        } else if (i == 1) {
+            // Pinky: 预测 Pac-Man 前方 4 格
+            target_x = pacman_x;
+            target_y = pacman_y;
+            switch (pacman_dir) {
+                case 0: target_y -= TILE_HEIGHT * 4; break;
+                case 1: target_x -= TILE_WIDTH * 4; break;
+                case 2: target_y += TILE_HEIGHT * 4; break;
+                case 3: target_x += TILE_WIDTH * 4; break;
             }
-        } else {
-            best_dir = random_direction();
+        } else if (i == 2) {
+            // Inky: 使用 Blinky 和 Pac-Man 构建向量，做镜像追踪
+            int bx = ghosts[0].x;
+            int by = ghosts[0].y;
+            int ref_x = pacman_x, ref_y = pacman_y;
+            switch (pacman_dir) {
+                case 0: ref_y -= TILE_HEIGHT * 2; break;
+                case 1: ref_x -= TILE_WIDTH * 2; break;
+                case 2: ref_y += TILE_HEIGHT * 2; break;
+                case 3: ref_x += TILE_WIDTH * 2; break;
+            }
+            target_x = ref_x + (ref_x - bx);
+            target_y = ref_y + (ref_y - by);
+        } else if (i == 3) {
+            // Clyde: 如果离 Pac-Man 太近则逃跑
+            int d = abs(g->x - pacman_x) + abs(g->y - pacman_y);
+            if (d < TILE_WIDTH * 8) {
+                target_x = 0;
+                target_y = 0; // 逃到角落
+            }
         }
 
-        // 更新位置
-        int new_x = g->x;
-        int new_y = g->y;
-        int tx = g->x / TILE_WIDTH;
-        int ty = g->y / TILE_HEIGHT;
+        // 搜索四个方向，选择最优方向（含ε随机性）
+        for (int d = 0; d < 4; d++) {
+            int dx = 0, dy = 0;
+            switch (d) {
+                case 0: dy = -step_size; break;
+                case 1: dx = -step_size; break;
+                case 2: dy = +step_size; break;
+                case 3: dx = +step_size; break;
+            }
 
-        switch (best_dir) {
-            case 0: new_y -= step_size; ty--; break;
-            case 1: new_x -= step_size; tx--; break;
-            case 2: new_y += step_size; ty++; break;
-            case 3: new_x += step_size; tx++; break;
+            int new_x = g->x + dx;
+            int new_y = g->y + dy;
+            int tx = new_x / TILE_WIDTH;
+            int ty = new_y / TILE_HEIGHT;
+
+            if (!can_move_to(new_x, new_y) || is_tile_occupied_by_other_ghost(tx, ty, i)) continue;
+
+            int dist = abs(new_x - target_x) + abs(new_y - target_y);
+
+            // ε-greedy 探索: 有一定概率选择非最优路径
+            if (rand() % 100 < 20) { // 20% 概率随机选择合法方向
+                best_dir = d;
+                break;
+            }
+
+            if (dist < best_dist) {
+                best_dist = dist;
+                best_dir = d;
+            }
         }
 
-        if (can_move_to(new_x, new_y) && !is_tile_occupied_by_other_ghost(tx, ty, i)) {
-            g->x = new_x;
-            g->y = new_y;
-        } else {
-            // fallback 随机
-            g->dir = random_direction();
-        }
-
+        // 更新方向和位置
         g->dir = best_dir;
+        switch (best_dir) {
+            case 0: g->y -= step_size; break;
+            case 1: g->x -= step_size; break;
+            case 2: g->y += step_size; break;
+            case 3: g->x += step_size; break;
+        }
+
         g->sprite->x = g->x;
         g->sprite->y = g->y;
     }
