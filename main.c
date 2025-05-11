@@ -170,12 +170,11 @@ void update_all_to_driver() {
         // state.sprites[i] = fake_sprites[i];
         state.sprites[i].x = sprites[i].x ;
         state.sprites[i].y = sprites[i].y ;
-        state.sprites[i].frame = sprites[i].direction;
-        // state.sprites[i].visible = sprites[i].visible;
-        state.sprites[i].visible = sprites[i].direction;
+        state.sprites[i].frame = sprites[i].frame;
+        state.sprites[i].visible = sprites[i].visible;
         state.sprites[i].direction = sprites[i].direction;
-        state.sprites[i].type_id = sprites[i].direction;
-        state.sprites[i].reserved1 = sprites[i].direction;
+        state.sprites[i].type_id = sprites[i].type_id;
+        state.sprites[i].reserved1 = sprites[i].rsv1;
         state.sprites[i].reserved2 = sprites[i].rsv2;
     }
 
@@ -284,6 +283,7 @@ void update_pacman() {
     pac->x = pacman_x;
     pac->y = pacman_y;
     pac->visible = 1;
+    pac->direction = pacman_dir;
     pac->frame = 0;
 }
 
