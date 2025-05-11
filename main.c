@@ -154,6 +154,9 @@ void set_control_flag(uint8_t flag) {
 void clear_control_flag(uint8_t flag) {
     *CONTROL_REG &= ~flag;
 }
+void clear_all_control_flags() {
+    *CONTROL_REG = 0;
+}
 
 bool is_control_flag_set(uint8_t flag) {
     return (*CONTROL_REG & flag) != 0;
@@ -639,6 +642,9 @@ void game_init() {
     pac->y = pacman_y;
     pac->visible = 1;
     pac->frame = 0;
+    clear_all_control_flags();
+    update_all_to_driver();
+    
 }
 
 // void game_loop() {
