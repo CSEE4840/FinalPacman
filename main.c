@@ -713,6 +713,7 @@ void game_loop() {
     int transferred;
 
     while (1) {
+        update_all_to_driver();
         int r = libusb_interrupt_transfer(keyboard, endpoint_address,
                                           (unsigned char *)&packet, sizeof(packet),
                                           &transferred, 1);
