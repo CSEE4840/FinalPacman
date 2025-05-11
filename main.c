@@ -328,6 +328,20 @@ bool is_tile_occupied_by_other_ghost(int gx, int gy, int self_index) {
     }
     return false;
 }
+#include <stdlib.h>  // for rand()
+
+#define EPSILON 0.2f  // 20% 概率做随机动作
+
+// 计算 Manhattan 距离
+int manhattan_distance(int x1, int y1, int x2, int y2) {
+    return abs(x1 - x2) + abs(y1 - y2);
+}
+
+// 返回一个随机方向 [0, 1, 2, 3]
+int random_direction() {
+    return rand() % 4;
+}
+
 void update_ghosts() {
     static int ghost_tick = 0;
     ghost_tick++;
@@ -335,35 +349,101 @@ void update_ghosts() {
 
     for (int i = 0; i < NUM_GHOSTS; i++) {
         ghost_t* g = &ghosts[i];
-        int new_x = g->x;
-        int new_y = g->y;
 
-        // 计算目标 tile
-        int new_tx = g->x / TILE_WIDTH;
-        int new_ty = g->y / TILE_HEIGHT;
+        int best_dir = g->dir;  // 默认向前
+        int min_dist = 1 << 30;
 
-        switch (g->dir) {
-            case 0: new_y -= step_size; new_ty--; break;
-            case 1: new_x -= step_size;  new_tx--; break;
-            case 2: new_y += step_size; new_ty++; break;
-            case 3: new_x += step_size;  new_tx++; break;
+        // ε-greedy：20% 概率选随机动作
+        bool random_action = ((float)rand() / RAND_MAX) < EPSILON;
+
+        if (!random_action) {
+            // 选择最优方向：使 Manhattan 距离最小
+            for (int d = 0; d < 4; d++) {
+                int nx = g->x, ny = g->y;
+                switch (d) {
+                    case 0: ny -= step_size; break;
+                    case 1: nx -= step_size; break;
+                    case 2: ny += step_size; break;
+                    case 3: nx += step_size; break;
+                }
+
+                int tx = nx / TILE_WIDTH;
+                int ty = ny / TILE_HEIGHT;
+
+                if (can_move_to(nx, ny) && !is_tile_occupied_by_other_ghost(tx, ty, i)) {
+                    int dist = manhattan_distance(nx, ny, pacman_x, pacman_y);
+                    if (dist < min_dist) {
+                        min_dist = dist;
+                        best_dir = d;
+                    }
+                }
+            }
+        } else {
+            best_dir = random_direction();
         }
 
-        // 判断是否能移动且目标 tile 未被其他幽灵占用
-        if (can_move_to(new_x, new_y) &&
-            !is_tile_occupied_by_other_ghost(new_tx, new_ty, i)) {
+        // 更新位置
+        int new_x = g->x;
+        int new_y = g->y;
+        int tx = g->x / TILE_WIDTH;
+        int ty = g->y / TILE_HEIGHT;
+
+        switch (best_dir) {
+            case 0: new_y -= step_size; ty--; break;
+            case 1: new_x -= step_size; tx--; break;
+            case 2: new_y += step_size; ty++; break;
+            case 3: new_x += step_size; tx++; break;
+        }
+
+        if (can_move_to(new_x, new_y) && !is_tile_occupied_by_other_ghost(tx, ty, i)) {
             g->x = new_x;
             g->y = new_y;
         } else {
-            // 不能前进就随机换一个方向（避开死循环）
-            g->dir = (g->dir + 1) % 4;
+            // fallback 随机
+            g->dir = random_direction();
         }
 
-        // 更新 sprite 位置
+        g->dir = best_dir;
         g->sprite->x = g->x;
         g->sprite->y = g->y;
     }
 }
+// void update_ghosts() {
+//     static int ghost_tick = 0;
+//     ghost_tick++;
+//     if (ghost_tick % 10 != 0) return;
+
+//     for (int i = 0; i < NUM_GHOSTS; i++) {
+//         ghost_t* g = &ghosts[i];
+//         int new_x = g->x;
+//         int new_y = g->y;
+
+//         // 计算目标 tile
+//         int new_tx = g->x / TILE_WIDTH;
+//         int new_ty = g->y / TILE_HEIGHT;
+
+//         switch (g->dir) {
+//             case 0: new_y -= step_size; new_ty--; break;
+//             case 1: new_x -= step_size;  new_tx--; break;
+//             case 2: new_y += step_size; new_ty++; break;
+//             case 3: new_x += step_size;  new_tx++; break;
+//         }
+
+//         // 判断是否能移动且目标 tile 未被其他幽灵占用
+//         if (can_move_to(new_x, new_y) &&
+//             !is_tile_occupied_by_other_ghost(new_tx, new_ty, i)) {
+//             g->x = new_x;
+//             g->y = new_y;
+//         } else {
+//             // 不能前进就随机换一个方向（避开死循环）
+//             g->dir = (g->dir + 1) % 4;
+//         }
+
+//         // 更新 sprite 位置
+//         g->sprite->x = g->x;
+//         g->sprite->y = g->y;
+//     }
+// }
 
 void game_init_playfield(void) {
     static const char* tiles =
