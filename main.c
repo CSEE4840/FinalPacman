@@ -165,6 +165,7 @@ uint8_t direction_to_control(uint8_t dir) {
         case 1: return 3; // left
         case 2: return 2; // down
         case 3: return 1; // right
+        case 5: return 4; // eat pellet
         default: return 0;
     }
 }
