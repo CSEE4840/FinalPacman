@@ -314,7 +314,7 @@ bool is_ghost_tile(int x, int y) {
 
 void print_tilemap() {
     printf("=== Tilemap View ===\n");
-    for (int y = 3; y <= 33; y++) {
+    for (int y = 0; y <= 30; y++) {
         for (int x = 0; x < 28; x++) {
             uint8_t tile = TILEMAP_BASE[y * SCREEN_WIDTH_TILES + x];
             if (pacman_x / TILE_WIDTH == x && pacman_y / TILE_HEIGHT == y) {
