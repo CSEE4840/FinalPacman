@@ -40,6 +40,7 @@ static void write_all_state(vga_all_state_t *state) {
     }
     iowrite16(state->score, SCORE_REG_OFFSET);
     iowrite8(state->control, CONTROL_REG_OFFSET);
+    iowrite8(0, CONTROL_REG_OFFSET + 1); // Clear the control flag
     iowrite16(state->pellet_to_eat, PELLETE_EAT_REG_OFFSET);
 }
 
