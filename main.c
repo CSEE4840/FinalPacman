@@ -139,8 +139,8 @@ uint8_t fake_control = 1;
 
 ghost_t ghosts[NUM_GHOSTS];
 sprite_t* sprites = (sprite_t*) SPRITE_BASE;
-#define PACMAN_INIT_X 15 * TILE_WIDTH + TILE_WIDTH / 2
-#define PACMAN_INIT_Y 23 * TILE_HEIGHT + TILE_HEIGHT / 2
+#define PACMAN_INIT_X 1 * TILE_WIDTH + TILE_WIDTH / 2
+#define PACMAN_INIT_Y 1 * TILE_HEIGHT + TILE_HEIGHT / 2
 int pacman_x = PACMAN_INIT_X;
 int pacman_y = PACMAN_INIT_Y;
 uint8_t pacman_dir = 1; // 初始向左
