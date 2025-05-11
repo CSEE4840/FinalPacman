@@ -504,7 +504,7 @@ void game_init_playfield(void) {
         "0UUUUUUUUUUUU45UUUUUUUUUUUU1" // 3
         "L............rl............R" // 4
         "L.ebbf.ebbbf.rl.ebbbf.ebbf.R" // 5
-        "LPr  l.r   l.rl.r   l.r  lPR" // 6
+        "L.r  l.r   l.rl.r   l.r  l.R" // 6
         "L.guuh.guuuh.gh.guuuh.guuh.R" // 7
         "L..........................R" // 8
         "L.ebbf.ef.ebbbbbbf.ef.ebbf.R" // 9
@@ -524,7 +524,7 @@ void game_init_playfield(void) {
         "L............rl............R" // 23
         "L.ebbf.ebbbf.rl.ebbbf.ebbf.R" // 24
         "L.guyl.guuuh.gh.guuuh.rxuh.R" // 25
-        "LP..rl.......  .......rl..PR" // 26
+        "L...rl.......  .......rl...R" // 26
         "6bf.rl.ef.ebbbbbbf.ef.rl.eb8" // 27
         "7uh.gh.rl.guuyxuuh.rl.gh.gu9" // 28
         "L......rl....rl....rl......R" // 29
