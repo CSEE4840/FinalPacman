@@ -728,7 +728,7 @@ void game_loop() {
         }
 
         update_all_to_driver();
-        usleep(100000);
+        usleep(500000);
 
         // 如果 Game Over，暂停游戏，直到 reset
         if (*CONTROL_REG & CTRL_GAME_OVER) {
