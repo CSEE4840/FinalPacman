@@ -14,7 +14,7 @@
 
 #define SPRITE_DESC_OFFSET(i)  (dev.virtbase + (i) * 8)
 #define SCORE_REG_OFFSET       (dev.virtbase + 0x28)
-#define CONTROL_REG_OFFSET     (dev.virtbase + 0x2B)
+#define CONTROL_REG_OFFSET     (dev.virtbase + 0x2A)
 #define PELLETE_EAT_REG_OFFSET (dev.virtbase + 0x2C)
 
 #define NUM_SPRITES 5

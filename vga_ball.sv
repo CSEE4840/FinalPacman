@@ -61,7 +61,7 @@ module vga_ball (
     reg [11:0] tile[0:4799];
     reg [7:0] tile_bitmaps[0:879];
 
-    reg [7:0] score;
+    reg [15:0] score;
     reg [31:0] pacman_up[0:15], pacman_right[0:15], pacman_down[0:15], pacman_left[0:15], pacman_eat[0:15];
 
     wire [6:0] tile_x = hcount[10:4];
@@ -143,20 +143,45 @@ initial $readmemh("background.vh", audio_data);
 
         if (!gameover_latched)
             second_counter <= second_counter + 1;
-
         if (chipselect && write) begin
-            case (address)
-                5'd0: begin
-                    pacman_x <= writedata[7:0];
-                    pacman_y <= writedata[15:8];
-                end
-                5'd3: pacman_dir <= writedata[2:0];
-                5'd4: trigger_tile_index <= writedata[12:0];
-                5'd5: begin
-                    if (writedata == 16'h0001) begin
-                        gameover_latched <= 1;
-                        second_counter <= 0;
-                    end else if (writedata == 16'h0000) begin
+            case (address[4:0])
+                // === Sprite 0: Pac-Man ===
+                6'h00: begin pacman_x <= writedata[7:0]; pacman_y <= writedata[15:8]; end
+                // 6'h01: begin sprite_frame[0] <= writedata[7:0]; sprite_visible[0] <= writedata[15:8]; end
+                6'h02: begin pacman_dir <= writedata[1:0]; end
+                // 6'h03: begin sprite_rsv1[0] <= writedata[7:0]; sprite_rsv2[0] <= writedata[15:8]; end
+
+                // === Sprite 1: Ghost 0 ===
+                6'h04: begin ghost_x[0] <= writedata[7:0]; ghost_y[0] <= writedata[15:8]; end
+                // 6'h05: begin sprite_frame[1] <= writedata[7:0]; sprite_visible[1] <= writedata[15:8]; end
+                6'h06: begin ghost_dir[0] <= writedata[1:0];end
+                // 6'h07: begin sprite_rsv1[1] <= writedata[7:0]; sprite_rsv2[1] <= writedata[15:8]; end
+
+                // === Sprite 2: Ghost 1 ===
+                6'h08: begin ghost_x[1] <= writedata[7:0]; ghost_y[1] <= writedata[15:8]; end
+                // 6'h09: begin sprite_frame[2] <= writedata[7:0]; sprite_visible[2] <= writedata[15:8]; end
+                6'h0A: begin ghost_dir[1] <= writedata[1:0];end
+                // 6'h0B: begin sprite_rsv1[2] <= writedata[7:0]; sprite_rsv2[2] <= writedata[15:8]; end
+
+                // === Sprite 3: Ghost 2 ===
+                6'h0C: begin ghost_x[2] <= writedata[7:0]; ghost_y[2] <= writedata[15:8]; end
+                // 6'h0D: begin sprite_frame[3] <= writedata[7:0]; sprite_visible[3] <= writedata[15:8]; end
+                6'h0E: begin ghost_dir[2] <= writedata[1:0];end
+                // 6'h0F: begin sprite_rsv1[3] <= writedata[7:0]; sprite_rsv2[3] <= writedata[15:8]; end
+
+                // === Sprite 4: Ghost 3 ===
+                6'h10: begin ghost_x[3] <= writedata[7:0]; ghost_y[3] <= writedata[15:8]; end
+                // 6'h11: begin sprite_frame[4] <= writedata[7:0]; sprite_visible[4] <= writedata[15:8]; end
+                6'h12: begin ghost_dir[3] <= writedata[1:0]; end
+                // 6'h13: begin sprite_rsv1[4] <= writedata[7:0]; sprite_rsv2[4] <= writedata[15:8]; end
+
+                // === Score Register (4-digit decimal packed) ===
+                6'h14: score <= writedata;
+
+                // === Control Register (only lower 8 bits used) ===
+                6'h15: begin  
+
+                    if (writedata == 16'h0000) begin
                         $readmemh("map.vh", tile);
                         score <= 0;
                         game_timer <= 0;
@@ -172,21 +197,61 @@ initial $readmemh("background.vh", audio_data);
                         ghost_x[1] <= 200; ghost_y[1] <= 100;
                         ghost_x[2] <= 300; ghost_y[2] <= 100;
                         ghost_x[3] <= 400; ghost_y[3] <= 100;
-                        gameover_latched <= 0;
-                        gameover_wait <= 0;
                     end
+                    else if (writedata[4] == 1'b1) begin
+                        gameover_latched <= 1;
+                        second_counter <= 0;
+                    end
+
                 end
-                5'd6: begin ghost_x[0] <= writedata[7:0]; ghost_y[0] <= writedata[15:8]; end 
-                5'd7: begin ghost_x[1] <= writedata[7:0]; ghost_y[1] <= writedata[15:8]; end
-                5'd8: begin ghost_x[2] <= writedata[7:0]; ghost_y[2] <= writedata[15:8]; end
-                5'd9: begin ghost_x[3] <= writedata[7:0]; ghost_y[3] <= writedata[15:8]; end
-                5'd10: ghost_dir[0] <= writedata[1:0];
-                5'd11: ghost_dir[1] <= writedata[1:0];
-                5'd12: ghost_dir[2] <= writedata[1:0];
-                5'd13: ghost_dir[3] <= writedata[1:0];
-                5'd14: score <= writedata[7:0];
+
+                // === Pellet eat register ===
+                6'h16: trigger_tile_index <= writedata;
             endcase
         end
+        // if (chipselect && write) begin
+        //     case (address)
+        //         5'd0: begin
+        //             pacman_x <= writedata[7:0];
+        //             pacman_y <= writedata[15:8];
+        //         end
+        //         5'd2: pacman_dir <= writedata[10:8];
+        //         5'd4: trigger_tile_index <= writedata[12:0];
+        //         5'd5: begin
+        //             if (writedata == 16'h0001) begin
+        //                 gameover_latched <= 1;
+        //                 second_counter <= 0;
+        //             end else if (writedata == 16'h0000) begin
+        //                 $readmemh("map.vh", tile);
+        //                 score <= 0;
+        //                 game_timer <= 0;
+        //                 demo_index <= 13'd4088;
+        //                 pacman_x <= 340;
+        //                 pacman_y <= 240;
+        //                 pacman_dir <= DIR_RIGHT;
+        //                 ghost_dir[0] <= DIR_LEFT;
+        //                 ghost_dir[1] <= DIR_RIGHT;
+        //                 ghost_dir[2] <= DIR_UP;
+        //                 ghost_dir[3] <= DIR_DOWN;
+        //                 ghost_x[0] <= 100; ghost_y[0] <= 100;
+        //                 ghost_x[1] <= 200; ghost_y[1] <= 100;
+        //                 ghost_x[2] <= 300; ghost_y[2] <= 100;
+        //                 ghost_x[3] <= 400; ghost_y[3] <= 100;
+        //                 gameover_latched <= 0;
+        //                 gameover_wait <= 0;
+        //             end
+        //         end
+        //         5'd6: begin ghost_x[0] <= writedata[7:0]; ghost_y[0] <= writedata[15:8]; end 
+        //         5'd7: begin ghost_x[1] <= writedata[7:0]; ghost_y[1] <= writedata[15:8]; end
+        //         5'd8: begin ghost_x[2] <= writedata[7:0]; ghost_y[2] <= writedata[15:8]; end
+        //         5'd9: begin ghost_x[3] <= writedata[7:0]; ghost_y[3] <= writedata[15:8]; end
+        //         5'd10: ghost_dir[0] <= writedata[1:0];
+        //         5'd11: ghost_dir[1] <= writedata[1:0];
+        //         5'd12: ghost_dir[2] <= writedata[1:0];
+        //         5'd13: ghost_dir[3] <= writedata[1:0];
+        //         5'd14: score <= writedata[7:0];
+        //     endcase
+        // end
 
         if (gameover_latched) begin
             // Display GAME OVER text
@@ -243,10 +308,11 @@ initial $readmemh("background.vh", audio_data);
         tile[base_tile + 83] = 38 + (17 * 2) + 1;
         tile[base_tile + 84] = 38 + (4 * 2) + 1;
 
-        d3 = score / 1000;
-        d2 = (score % 1000) / 100;
-        d1 = (score % 100) / 10;
-        d0 = score % 10;
+        d3 = score[15:12];
+        d2 = score[11:8];
+        d1 = score[7:4];
+        d0 = score[3:0];
+
         base_score_tile = 761;
         tile[base_score_tile + 0]  = 38 + (26 * 2) + d3 * 2;
         tile[base_score_tile + 1]  = 38 + (26 * 2) + d2 * 2;
