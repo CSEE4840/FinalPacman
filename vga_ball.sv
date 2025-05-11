@@ -311,9 +311,9 @@ initial $readmemh("audio.vh", audio_data);
         tile[base_score_tile + 83] = 38 + (26 * 2) + d0 * 2 + 1;
         if (trigger_tile_index != 65535)
         begin
-            if ((pacman_y[9:3] * 80 + pacman_x[9:3]) == trigger_tile_index) begin
+            // if ((pacman_y[9:3] * 80 + pacman_x[9:3]) == trigger_tile_index) begin
                 tile[trigger_tile_index] <= 12'h25;
-            end
+            // end
         end
             // if ((pacman_y[9:3] * 80 + pacman_x[9:3]) == trigger_tile_index) begin
             //     tile[trigger_tile_index] <= 12'h25;
