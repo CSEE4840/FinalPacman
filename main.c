@@ -159,7 +159,15 @@ bool is_control_flag_set(uint8_t flag) {
     return (*CONTROL_REG & flag) != 0;
 }
 
-
+uint8_t direction_to_control(uint8_t dir) {
+    switch (dir) {
+        case 0: return 0; // up
+        case 1: return 3; // left
+        case 2: return 2; // down
+        case 3: return 1; // right
+        default: return 0;
+    }
+}
 int vga_ball_fd;
 
 void update_all_to_driver() {
@@ -172,7 +180,7 @@ void update_all_to_driver() {
         state.sprites[i].y = sprites[i].y ;
         state.sprites[i].frame = sprites[i].frame;
         state.sprites[i].visible = sprites[i].visible;
-        state.sprites[i].direction = sprites[i].direction;
+        state.sprites[i].direction = direction_to_control(sprites[i].direction);
         state.sprites[i].type_id = sprites[i].type_id;
         state.sprites[i].reserved1 = sprites[i].rsv1;
         state.sprites[i].reserved2 = sprites[i].rsv2;
