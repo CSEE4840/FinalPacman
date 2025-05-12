@@ -2,8 +2,8 @@ import wave
 import struct
 
 # Input and output filenames
-wav_file = 'pacman-theme.wav'
-hex_file = 'pacman-theme.hex'
+wav_file = 'pacman-intro.wav'
+hex_file = 'pacman-intro.hex'
 
 # Open WAV file
 with wave.open(wav_file, 'rb') as w:
