@@ -14,11 +14,7 @@
 
 #include <string.h>
 #include <libusb-1.0/libusb.h>
-// #include "usbkeyboard.h" // 你需要有这个头文件
-
-#include "controller.h"
-// #include <libusb-1.0/libusb.h>
-
+#include "usbkeyboard.h" // 你需要有这个头文件
 
 #define INPUT_BUFFER_SIZE 256
 #define CHAT_COLS 64
@@ -265,7 +261,7 @@ uint16_t generate_packed_score(uint16_t score) {
     int s = score % 10000;  // 保证最多4位
     return ((s / 1000) << 12) |
            (((s / 100) % 10) << 8) |
-           (((s / 10) % 10) << 4) 
+           (((s / 10) % 10) << 4) |
            (s % 10);
 }
 
@@ -578,33 +574,33 @@ void init_ghosts() {
     }
 }
 
-// void wait_for_start_signal() {
-//     printf("Waiting for START signal...\n");
-//     int transferred;
-//     while (1) {
-//         // update_all_to_driver();
-//         int r = libusb_interrupt_transfer(keyboard, endpoint_address,
-//                                           (unsigned char *)&packet, sizeof(packet),
-//                                           &transferred, 1);
-//         if (r == 0 && transferred == sizeof(packet)) {
-//             for (int i = 0; i < MAX_KEYS; i++) {
-//                 uint8_t key = packet.keycode[i];
-//                 if (key != 0) {
-//                     char c = usb_to_ascii(key, packet.modifiers);
-//                     if (c == '\n') {
-//                         // 收到回车键，表示开始游戏
-//                         set_control_flag(CTRL_START);
-//                         printf("START signal received. Game starting...\n");
-//                         return;
-//                     }
-//                 }
-//             }
-//         }
-//         usleep(10000); // 等待一段时间再检查
-//     }
+void wait_for_start_signal() {
+    printf("Waiting for START signal...\n");
+    int transferred;
+    while (1) {
+        // update_all_to_driver();
+        int r = libusb_interrupt_transfer(keyboard, endpoint_address,
+                                          (unsigned char *)&packet, sizeof(packet),
+                                          &transferred, 1);
+        if (r == 0 && transferred == sizeof(packet)) {
+            for (int i = 0; i < MAX_KEYS; i++) {
+                uint8_t key = packet.keycode[i];
+                if (key != 0) {
+                    char c = usb_to_ascii(key, packet.modifiers);
+                    if (c == '\n') {
+                        // 收到回车键，表示开始游戏
+                        set_control_flag(CTRL_START);
+                        printf("START signal received. Game starting...\n");
+                        return;
+                    }
+                }
+            }
+        }
+        usleep(10000); // 等待一段时间再检查
+    }
 
-//     printf("Game started!\n");
-// }
+    printf("Game started!\n");
+}
 bool paused = false;
 
 void process_control_keys(char c) {
@@ -709,81 +705,81 @@ bool check_gameover() {
     }
     return false;
 }
-// void game_loop() {
-//     printf("Waiting for START signal...\n");
-//     wait_for_start_signal();
+void game_loop() {
+    printf("Waiting for START signal...\n");
+    wait_for_start_signal();
 
-//     printf("Game loop started. Press ESC to exit.\n");
-//     int transferred;
+    printf("Game loop started. Press ESC to exit.\n");
+    int transferred;
 
-//     while (1) {
-//         update_all_to_driver();
-//         int r = libusb_interrupt_transfer(keyboard, endpoint_address,
-//                                           (unsigned char *)&packet, sizeof(packet),
-//                                           &transferred, 1);
-//         if (r == 0 && transferred == sizeof(packet)) {
-//             for (int i = 0; i < MAX_KEYS; i++) {
-//                 uint8_t key = packet.keycode[i];
-//                 if (key != 0) {
-//                     char c = usb_to_ascii(key, packet.modifiers);
-//                     if (c == '\x1b') {
-//                         printf("ESC pressed. Exiting.\n");
-//                         *CONTROL_REG |= CTRL_GAME_OVER;
-//                         return;
-//                     } else if (c == ' ') {
-//                         *CONTROL_REG ^= CTRL_PAUSE;
-//                     } else if (c == 'r' || c == 'R') {
-//                         *CONTROL_REG |= CTRL_RESET;
-//                         return;
-//                     } else {
-//                         handle_input(c);
-//                     }
-//                 }
-//             }
-//         }
+    while (1) {
+        update_all_to_driver();
+        int r = libusb_interrupt_transfer(keyboard, endpoint_address,
+                                          (unsigned char *)&packet, sizeof(packet),
+                                          &transferred, 1);
+        if (r == 0 && transferred == sizeof(packet)) {
+            for (int i = 0; i < MAX_KEYS; i++) {
+                uint8_t key = packet.keycode[i];
+                if (key != 0) {
+                    char c = usb_to_ascii(key, packet.modifiers);
+                    if (c == '\x1b') {
+                        printf("ESC pressed. Exiting.\n");
+                        *CONTROL_REG |= CTRL_GAME_OVER;
+                        return;
+                    } else if (c == ' ') {
+                        *CONTROL_REG ^= CTRL_PAUSE;
+                    } else if (c == 'r' || c == 'R') {
+                        *CONTROL_REG |= CTRL_RESET;
+                        return;
+                    } else {
+                        handle_input(c);
+                    }
+                }
+            }
+        }
 
-//         if (*CONTROL_REG & CTRL_PAUSE) {
-//             usleep(10000);
-//             continue;
-//         }
+        if (*CONTROL_REG & CTRL_PAUSE) {
+            usleep(10000);
+            continue;
+        }
 
-//         update_pacman();
-//         update_ghosts();
+        update_pacman();
+        update_ghosts();
 
-//         print_tilemap();
+        print_tilemap();
 
-//         // 检查 Game Over 条件
-//         if (check_gameover()) {
-//             *CONTROL_REG |= CTRL_GAME_OVER;
-//             printf("[Game] Game Over! Press 'r' to restart...\n");
-//         }
+        // 检查 Game Over 条件
+        if (check_gameover()) {
+            *CONTROL_REG |= CTRL_GAME_OVER;
+            printf("[Game] Game Over! Press 'r' to restart...\n");
+        }
 
-//         update_all_to_driver();
-//         usleep(100000);
+        update_all_to_driver();
+        usleep(100000);
 
-//         // 如果 Game Over，暂停游戏，直到 reset
-//         if (*CONTROL_REG & CTRL_GAME_OVER) {
-//             while (!(*CONTROL_REG & CTRL_RESET)) {
-//                 int r = libusb_interrupt_transfer(keyboard, endpoint_address,
-//                                                   (unsigned char *)&packet, sizeof(packet),
-//                                                   &transferred, 1);
-//                 if (r == 0 && transferred == sizeof(packet)) {
-//                     for (int i = 0; i < MAX_KEYS; i++) {
-//                         uint8_t key = packet.keycode[i];
-//                         if (key != 0) {
-//                             char c = usb_to_ascii(key, packet.modifiers);
-//                             if (c == 'r' || c == 'R') {
-//                                 *CONTROL_REG |= CTRL_RESET;
-//                             }
-//                         }
-//                     }
-//                 }
-//                 usleep(100000);
-//             }
-//             return;  // reset 被设置，退出 game_loop()，由 main() 重启游戏
-//         }
-//     }
-// }
+        // 如果 Game Over，暂停游戏，直到 reset
+        if (*CONTROL_REG & CTRL_GAME_OVER) {
+            while (!(*CONTROL_REG & CTRL_RESET)) {
+                int r = libusb_interrupt_transfer(keyboard, endpoint_address,
+                                                  (unsigned char *)&packet, sizeof(packet),
+                                                  &transferred, 1);
+                if (r == 0 && transferred == sizeof(packet)) {
+                    for (int i = 0; i < MAX_KEYS; i++) {
+                        uint8_t key = packet.keycode[i];
+                        if (key != 0) {
+                            char c = usb_to_ascii(key, packet.modifiers);
+                            if (c == 'r' || c == 'R') {
+                                *CONTROL_REG |= CTRL_RESET;
+                            }
+                        }
+                    }
+                }
+                usleep(100000);
+            }
+            return;  // reset 被设置，退出 game_loop()，由 main() 重启游戏
+        }
+    }
+}
 
 
 // void update_pacman_position(unsigned short x, unsigned short y, unsigned short old_x, unsigned short old_y) {
@@ -798,56 +794,22 @@ bool check_gameover() {
 //     }
 // }
 
-// int main() {
-    
-
-//     if ((keyboard = openkeyboard(&endpoint_address)) == NULL) {
-//         fprintf(stderr, "Cannot find USB keyboard.\n");
-//         return 1;
-//     }
-//     printf("USB keyboard found, start playing...\n");
-
-
-//     // unsigned short x = 320, y = 240;
-//     // unsigned short old_x = x, old_y = y;
-
-//     uint8_t endpoint_address;
-//     struct libusb_device_handle *keyboard;
-//     struct usb_keyboard_packet packet;
-
-//     vga_ball_fd = open("/dev/vga_ball", O_RDWR);
-//     if (vga_ball_fd == -1) {
-//         perror("Failed to open /dev/vga_ball");
-//         return 1;
-//     }
-
-//     // keyboard = openkeyboard(&endpoint_address);
-//     // if (!keyboard) {
-//     //     fprintf(stderr, "Could not find a keyboard\n");
-//     //     return 1;
-//     // }
-
-//     // printf("Pac-Man USB keyboard control started\n");
-//     while(1)
-//     {
-//         game_init();
-//         printf("Starting game loop...\n");
-//         game_loop();
-        
-    
-//     }
-
-//     libusb_close(keyboard);
-//     libusb_exit(NULL);
-//     close(vga_ball_fd);
-//     return 0;
-// }
-
 int main() {
-    struct controller_list controller = open_controller();
-    uint8_t endpoint_address = controller.device1_addr;
-    struct libusb_device_handle* device = controller.device1;
-    struct controller_pkt packet;
+    
+
+    if ((keyboard = openkeyboard(&endpoint_address)) == NULL) {
+        fprintf(stderr, "Cannot find USB keyboard.\n");
+        return 1;
+    }
+    printf("USB keyboard found, start playing...\n");
+
+
+    // unsigned short x = 320, y = 240;
+    // unsigned short old_x = x, old_y = y;
+
+    uint8_t endpoint_address;
+    struct libusb_device_handle *keyboard;
+    struct usb_keyboard_packet packet;
 
     vga_ball_fd = open("/dev/vga_ball", O_RDWR);
     if (vga_ball_fd == -1) {
@@ -855,74 +817,23 @@ int main() {
         return 1;
     }
 
-    printf("Controller connected. Starting Pac-Man...\n");
+    // keyboard = openkeyboard(&endpoint_address);
+    // if (!keyboard) {
+    //     fprintf(stderr, "Could not find a keyboard\n");
+    //     return 1;
+    // }
 
-    while (1) {
+    // printf("Pac-Man USB keyboard control started\n");
+    while(1)
+    {
         game_init();
-        printf("Waiting for START (A button)...\n");
-
-        int transferred;
-        while (!(is_control_flag_set(CTRL_START))) {
-            if (libusb_interrupt_transfer(device, endpoint_address,
-                                          (unsigned char*)&packet, sizeof(packet),
-                                          &transferred, 0) == 0 && transferred == 7) {
-                if (packet.ab & 0x20) {  // A button
-                    set_control_flag(CTRL_START);
-                    break;
-                }
-            }
-            usleep(10000);
-        }
-
-        printf("Game started. Use controller to play.\n");
-
-        while (1) {
-            if (libusb_interrupt_transfer(device, endpoint_address,
-                                          (unsigned char*)&packet, sizeof(packet),
-                                          &transferred, 0) == 0 && transferred == 7) {
-
-                if (packet.dir_x == 0x00) pacman_dir = 1; // left
-                if (packet.dir_x == 0xff) pacman_dir = 3; // right
-                if (packet.dir_y == 0x00) pacman_dir = 0; // up
-                if (packet.dir_y == 0xff) pacman_dir = 2; // down
-
-                if (packet.ab & 0x10) {
-                    *CONTROL_REG ^= CTRL_PAUSE;
-                    usleep(200000); // debounce
-                }
-            }
-
-            if (*CONTROL_REG & CTRL_PAUSE) {
-                usleep(100000);
-                continue;
-            }
-
-            update_pacman();
-            update_ghosts();
-
-            if (check_gameover()) {
-                *CONTROL_REG |= CTRL_GAME_OVER;
-                printf("[Game] Game Over! Press A to restart.\n");
-                break;
-            }
-
-            update_all_to_driver();
-            usleep(100000);
-        }
-
-        while (!(*CONTROL_REG & CTRL_RESET)) {
-            if (libusb_interrupt_transfer(device, endpoint_address,
-                                          (unsigned char*)&packet, sizeof(packet),
-                                          &transferred, 0) == 0 && transferred == 7) {
-                if (packet.ab & 0x20) { // A again = restart
-                    *CONTROL_REG |= CTRL_RESET;
-                }
-            }
-            usleep(100000);
-        }
+        printf("Starting game loop...\n");
+        game_loop();
+        
+    
     }
 
-    libusb_close(device);
+    libusb_close(keyboard);
     libusb_exit(NULL);
     close(vga_ball_fd);
     return 0;
