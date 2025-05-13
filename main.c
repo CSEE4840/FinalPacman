@@ -305,6 +305,16 @@ void update_pacman() {
         last_pellet_index = PELLET_NONE;
     }
     sprite_t* pac = &sprites[SPRITE_PACMAN];
+
+
+    // TP
+    if (pacman_x <= 1 * TILE_WIDTH && pacman_y == 14 * TILE_HEIGHT + TILE_HEIGHT / 2){
+        pacman_x = 27 * TILE_WIDTH + TILE_WIDTH / 2;
+    }
+    if (pacman_x >= 26 * TILE_WIDTH && pacman_y == 14 * TILE_HEIGHT + TILE_HEIGHT / 2){
+        pacman_x = 1 * TILE_WIDTH + TILE_WIDTH / 2;
+    }
+
     pac->x = pacman_x;
     pac->y = pacman_y;
     pac->visible = 1;
