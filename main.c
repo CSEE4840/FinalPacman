@@ -310,9 +310,11 @@ void update_pacman() {
     // TP
     if (pacman_x <= 2 * TILE_WIDTH && pacman_y == 14 * TILE_HEIGHT + TILE_HEIGHT / 2){
         pacman_x = 26 * TILE_WIDTH + TILE_WIDTH / 2;
+        printf("Teleport to (%d, %d)\n", pacman_x, pacman_y);
     }
     if (pacman_x >= 26 * TILE_WIDTH && pacman_y == 14 * TILE_HEIGHT + TILE_HEIGHT / 2){
         pacman_x = 1 * TILE_WIDTH + TILE_WIDTH / 2;
+        printf("Teleport to (%d, %d)\n", pacman_x, pacman_y);
     }
 
     pac->x = pacman_x;
