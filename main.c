@@ -902,6 +902,7 @@ int main() {
 
             if (check_gameover()) {
                 *CONTROL_REG |= CTRL_GAME_OVER;
+                update_all_to_driver();
                 printf("[Game] Game Over! Press A to restart.\n");
                 break;
             }
