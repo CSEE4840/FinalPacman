@@ -516,15 +516,15 @@ void game_init_playfield(void) {
         "L......rl....rl....rl......R" // 11
         "2BBBBf.rzbbf rl ebbwl.eBBBB3" // 12
         "     L.rxuuh gh guuyl.R     " // 13
-        "     L.rl          rl.R     " // 14
-        "     L.rl mjs  tjn rl.R     " // 15
-        "UUUUUh.gh i      q gh.gUUUUU" // 16
+        "     L.rl..........rl.R     " // 14
+        "     L.rl.mjs  tjn.rl.R     " // 15
+        "UUUUUh.gh.i      q.gh.gUUUUU" // 16
         "      .   i      q   .      " // 17
-        "BBBBBf.ef i      q ef.eBBBBB" // 18
-        "     L.rl okkkkkkp rl.R     " // 19
-        "     L.rl          rl.R     " // 20
-        "     L.rl ebbbbbbf rl.R     " // 21
-        "0UUUUh.gh guuyxuuh gh.gUUUU1" // 22
+        "BBBBBf.ef.i      q.ef.eBBBBB" // 18
+        "     L.rl.okkkkkkp.rl.R     " // 19
+        "     L.rl.        .rl.R     " // 20
+        "     L.rl.ebbbbbbf.rl.R     " // 21
+        "0UUUUh.gh.guuyxuuh.gh.gUUUU1" // 22
         "L............rl............R" // 23
         "L.ebbf.ebbbf.rl.ebbbf.ebbf.R" // 24
         "L.guyl.guuuh.gh.guuuh.rxuh.R" // 25
