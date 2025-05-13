@@ -38,8 +38,8 @@ module vga_ball (
     );
 
     localparam DIR_UP = 3'd0, DIR_RIGHT = 3'd1, DIR_DOWN = 3'd2, DIR_LEFT = 3'd3, DIR_EAT = 3'd4;
-localparam SCREEN_X_OFFSET = 25 * 8;  // 8 pixels per tile
-localparam SCREEN_Y_OFFSET = 14 * 8;
+    localparam SCREEN_X_OFFSET = 25 * 8;  // 8 pixels per tile
+    localparam SCREEN_Y_OFFSET = 14 * 8;
 
     reg [9:0] pacman_x;
     reg [9:0] pacman_y;
@@ -57,7 +57,7 @@ localparam SCREEN_Y_OFFSET = 14 * 8;
     wire [6:0] pac_tile_y = pacman_y[9:3];
     wire [12:0] pacman_tile_index = pac_tile_y * 80 + pac_tile_x;//
 
-    reg [11:0] tile[0:4799];
+    reg [12:0] tile[0:4799];
     reg [7:0] tile_bitmaps[0:879];
 
     reg [16:0] score;
@@ -106,9 +106,9 @@ initial $readmemh("audio.vh", audio_data);
         pacman_dir <= DIR_RIGHT;
         score <= 0;
         ghost_x[0] <= 0; ghost_y[0] <= 0; ghost_dir[0] <= DIR_LEFT;
-        ghost_x[1] <= 100; ghost_y[1] <= 0; ghost_dir[1] <= DIR_RIGHT;
-        ghost_x[2] <= 200; ghost_y[2] <= 0; ghost_dir[2] <= DIR_UP;
-        ghost_x[3] <= 300; ghost_y[3] <= 0; ghost_dir[3] <= DIR_DOWN;
+        ghost_x[1] <= 80; ghost_y[1] <= 0; ghost_dir[1] <= DIR_RIGHT;
+        ghost_x[2] <= 160; ghost_y[2] <= 0; ghost_dir[2] <= DIR_UP;
+        ghost_x[3] <= 250; ghost_y[3] <= 0; ghost_dir[3] <= DIR_DOWN;
     end else begin
 	// Audio Streaming - 48kHz @ 50MHz (every 1041 cycles)
 	if (sample_clock >= 1041) begin
@@ -200,25 +200,25 @@ initial $readmemh("audio.vh", audio_data);
 
         if (gameover_latched) begin
             // Display GAME OVER text
-            tile[3712 + 0]  <= 38 + (6 * 2);   // G
-            tile[3712 + 1]  <= 38 + (0 * 2);   // A
-            tile[3712 + 2]  <= 38 + (12 * 2);  // M
-            tile[3712 + 3]  <= 38 + (4 * 2);   // E
-            tile[3712 + 4]  <= 12'h25;         // blank tile
-            tile[3712 + 5]  <= 38 + (14 * 2);  // O
-            tile[3712 + 6]  <= 38 + (21 * 2);  // V
-            tile[3712 + 7]  <= 38 + (4 * 2);   // E
-            tile[3712 + 8]  <= 38 + (17 * 2);  // R
+            tile[3795 + 0]  <= 38 + (6 * 2);   // G
+            tile[3795 + 1]  <= 38 + (0 * 2);   // A
+            tile[3795 + 2]  <= 38 + (12 * 2);  // M
+            tile[3795 + 3]  <= 38 + (4 * 2);   // E
+            tile[3795 + 4]  <= 12'h25;         // blank tile
+            tile[3795 + 5]  <= 38 + (14 * 2);  // O
+            tile[3795 + 6]  <= 38 + (21 * 2);  // V
+            tile[3795 + 7]  <= 38 + (4 * 2);   // E
+            tile[3795 + 8]  <= 38 + (17 * 2);  // R
 
-            tile[3792 + 0]  <= 38 + (6 * 2) + 1;
-            tile[3792 + 1]  <= 38 + (0 * 2) + 1;
-            tile[3792 + 2]  <= 38 + (12 * 2) + 1;
-            tile[3792 + 3]  <= 38 + (4 * 2) + 1;
-            tile[3792 + 4]  <= 12'h25;
-            tile[3792 + 5]  <= 38 + (14 * 2) + 1;
-            tile[3792 + 6]  <= 38 + (21 * 2) + 1;
-            tile[3792 + 7]  <= 38 + (4 * 2) + 1;
-            tile[3792 + 8]  <= 38 + (17 * 2) + 1;
+            tile[3875 + 0]  <= 38 + (6 * 2) + 1;
+            tile[3875 + 1]  <= 38 + (0 * 2) + 1;
+            tile[3875 + 2]  <= 38 + (12 * 2) + 1;
+            tile[3875 + 3]  <= 38 + (4 * 2) + 1;
+            tile[3875 + 4]  <= 12'h25;
+            tile[3875 + 5]  <= 38 + (14 * 2) + 1;
+            tile[3875 + 6]  <= 38 + (21 * 2) + 1;
+            tile[3875 + 7]  <= 38 + (4 * 2) + 1;
+            tile[3875 + 8]  <= 38 + (17 * 2) + 1;
 
             gameover_wait <= gameover_wait + 1;
             if (gameover_wait == 50_000_000) begin
@@ -289,7 +289,7 @@ always @(*) begin
         if (tile_id == 8'h0A || tile_id >= 8'h26 || tile_id == 8'h14)
             {VGA_R, VGA_G, VGA_B} = 24'hFFFFFF;
         else
-            VGA_B = 8'hFF;
+            {VGA_R, VGA_G, VGA_B} = 24'h0000FF;
     end
 
     pacman_row = 32'b0;
@@ -345,7 +345,6 @@ always @(*) begin
     end
 end
 endmodule
-
 
 
 
