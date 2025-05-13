@@ -59,7 +59,7 @@ struct controller_list open_controller() {
 }
 
 void detect_presses(struct controller_pkt pkt, char *buttons, int mode) {
-    char vals[] = "LRUDAX";
+    char vals[] = "LRUDAXY";
     if (mode == 1) {
         strcpy(buttons, "11111");
     } else {
@@ -77,6 +77,9 @@ void detect_presses(struct controller_pkt pkt, char *buttons, int mode) {
     if ((pkt.ab & 0x10)) {
         buttons[5] = vals[5]; // X pressed
     }
+        if ((pkt.rl & 0x20)) {
+                buttons[6] = vals[6]; // L pressed
+        }
 }
 
 void *listen_controller(void *arg) {
