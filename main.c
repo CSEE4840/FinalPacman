@@ -707,6 +707,11 @@ bool check_gameover() {
             return true;
         }
     }
+    //检查score
+    if (score >= 2680) {
+        printf("Game Over! You win!\n");
+        return true;
+    }
     return false;
 }
 // void game_loop() {
