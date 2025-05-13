@@ -89,15 +89,19 @@ module vga_ball (
         base_tile = 752;
     end
 
-// ROMs for background and gameover
-	reg [15:0] audio_data[0:17554];       // 17,555 samples
-	reg [15:0] gameover_data[0:9999];   // adjust to your actual size
+// ROMs for sound effects
+	reg [15:0] audio_data[0:17554];       // audio.vh = pellet SFX
+	reg [15:0] gameover_data[0:16532];     // gameover.vh = game over SFX
 
-// Playback state
+// Playback control
 	reg [13:0] audio_index;
 	reg [15:0] audio_sample;
 	reg [15:0] sample_clock;
+	reg        playing_audio;
 	reg        playing_gameover;
+
+	localparam FAST_SAMPLE_PERIOD = 285;  // 50MHz / 175,550Hz
+
 
 // Target playback: finish in 0.1s
 localparam FAST_SAMPLE_PERIOD = 285;  // 50MHz / 175,550Hz ≈ 0.1s for 17,555 samples
@@ -108,106 +112,84 @@ end
 
 
     always @(posedge clk or posedge reset) begin
-	    if (reset) begin
-		gameover_latched <= 0;
-	        gameover_wait <= 0;
-	        pacman_x <= 340;
-	        pacman_y <= 240;
-	        pacman_dir <= DIR_RIGHT;
-	        score <= 0;
-	        ghost_x[0] <= 0; ghost_y[0] <= 0; ghost_dir[0] <= DIR_LEFT;
-	        ghost_x[1] <= 80; ghost_y[1] <= 0; ghost_dir[1] <= DIR_RIGHT;
-	        ghost_x[2] <= 160; ghost_y[2] <= 0; ghost_dir[2] <= DIR_UP;
-	        ghost_x[3] <= 250; ghost_y[3] <= 0; ghost_dir[3] <= DIR_DOWN;
-	    sample_clock     <= 0;
-	    audio_index      <= 0;
-	    audio_sample     <= 0;
-	    playing_gameover <= 0;
-	    L_DATA           <= 0;
-	    R_DATA           <= 0;
-	    L_VALID          <= 0;
-	    R_VALID          <= 0;
-	end else begin
-	    if (sample_clock >= FAST_SAMPLE_PERIOD) begin
-	        sample_clock <= 0;
-	
-	        // One-shot trigger of gameover sound
-	        if (gameover_latched && !playing_gameover) begin
-	            playing_gameover <= 1;
-	            audio_index <= 0;
-	        end
-	
-	        // Sample selection
-	        if (playing_gameover) begin
-	            audio_sample <= gameover_data[audio_index];
-	            if (audio_index < 9999)
-	                audio_index <= audio_index + 1;
-	            else
-	                playing_gameover <= 0;  // Stop after one full play
-	        end else if (trigger_tile_index != 13'd65535) begin
-	            audio_sample <= bgm_data[audio_index];
-	            audio_index <= (audio_index == 17554) ? 0 : audio_index + 1;
-	        end else begin
-	            audio_sample <= 16'd0;  // Silence
-	        end
-	    end else begin
-	        sample_clock <= sample_clock + 1;
-	    end
-	
-	    // Avalon-ST streaming to WM8731
-	    if (L_READY) begin
-	        L_DATA <= audio_sample;
-	        L_VALID <= (sample_clock == 0);
-	    end else begin
-	        L_VALID <= 0;
-	    end
-	
-	    if (R_READY) begin
-	        R_DATA <= audio_sample;
-	        R_VALID <= (sample_clock == 0);
-	    end else begin
-	        R_VALID <= 0;
-	    end
-	end
+    if (reset) begin
+        // Game reset
+        gameover_latched <= 0;
+        gameover_wait <= 0;
+        pacman_x <= 340;
+        pacman_y <= 240;
+        pacman_dir <= DIR_RIGHT;
+        score <= 0;
+        ghost_x[0] <= 0;   ghost_y[0] <= 0;   ghost_dir[0] <= DIR_LEFT;
+        ghost_x[1] <= 80;  ghost_y[1] <= 0;   ghost_dir[1] <= DIR_RIGHT;
+        ghost_x[2] <= 160; ghost_y[2] <= 0;   ghost_dir[2] <= DIR_UP;
+        ghost_x[3] <= 250; ghost_y[3] <= 0;   ghost_dir[3] <= DIR_DOWN;
 
+        // Audio reset
+        sample_clock     <= 0;
+        audio_index      <= 0;
+        audio_sample     <= 0;
+        playing_audio    <= 0;
+        playing_gameover <= 0;
+        L_DATA  <= 0; R_DATA  <= 0;
+        L_VALID <= 0; R_VALID <= 0;
+    end else begin
+        // === Audio playback ===
+        if (sample_clock >= FAST_SAMPLE_PERIOD) begin
+            sample_clock <= 0;
+
+            // Game over sound has priority
+            if (playing_gameover) begin
+                audio_sample <= gameover_data[audio_index];
+                if (audio_index < 9999)
+                    audio_index <= audio_index + 1;
+                else
+                    playing_gameover <= 0;
+            end
+            // Pellet sound
+            else if (playing_audio) begin
+                audio_sample <= audio_data[audio_index];
+                if (audio_index < 17554)
+                    audio_index <= audio_index + 1;
+                else
+                    playing_audio <= 0;
+            end else begin
+                audio_sample <= 16'd0;
+            end
+        end else begin
+            sample_clock <= sample_clock + 1;
+        end
+
+        // Avalon-ST streaming
+        if (L_READY) begin
+            L_DATA  <= audio_sample;
+            L_VALID <= (sample_clock == 0);
+        end else begin
+            L_VALID <= 0;
+        end
+
+        if (R_READY) begin
+            R_DATA  <= audio_sample;
+            R_VALID <= (sample_clock == 0);
+        end else begin
+            R_VALID <= 0;
+        end
+
+        // === Register write logic ===
         if (chipselect && write) begin
             case (address[4:0])
-                // === Sprite 0: Pac-Man ===
                 6'h00: begin pacman_x <= writedata[7:0]; pacman_y <= writedata[15:8]; end
-                // 6'h01: begin sprite_frame[0] <= writedata[7:0]; sprite_visible[0] <= writedata[15:8]; end
-                6'h02: begin pacman_dir <= writedata[2:0]; end
-                // 6'h03: begin sprite_rsv1[0] <= writedata[7:0]; sprite_rsv2[0] <= writedata[15:8]; end
-
-                // === Sprite 1: Ghost 0 ===
+                6'h02: pacman_dir <= writedata[2:0];
                 6'h04: begin ghost_x[0] <= writedata[7:0]; ghost_y[0] <= writedata[15:8]; end
-                // 6'h05: begin sprite_frame[1] <= writedata[7:0]; sprite_visible[1] <= writedata[15:8]; end
-                6'h06: begin ghost_dir[0] <= writedata[1:0];end
-                // 6'h07: begin sprite_rsv1[1] <= writedata[7:0]; sprite_rsv2[1] <= writedata[15:8]; end
-
-                // === Sprite 2: Ghost 1 ===
+                6'h06: ghost_dir[0] <= writedata[1:0];
                 6'h08: begin ghost_x[1] <= writedata[7:0]; ghost_y[1] <= writedata[15:8]; end
-                // 6'h09: begin sprite_frame[2] <= writedata[7:0]; sprite_visible[2] <= writedata[15:8]; end
-                6'h0A: begin ghost_dir[1] <= writedata[1:0];end
-                // 6'h0B: begin sprite_rsv1[2] <= writedata[7:0]; sprite_rsv2[2] <= writedata[15:8]; end
-
-                // === Sprite 3: Ghost 2 ===
+                6'h0A: ghost_dir[1] <= writedata[1:0];
                 6'h0C: begin ghost_x[2] <= writedata[7:0]; ghost_y[2] <= writedata[15:8]; end
-                // 6'h0D: begin sprite_frame[3] <= writedata[7:0]; sprite_visible[3] <= writedata[15:8]; end
-                6'h0E: begin ghost_dir[2] <= writedata[1:0];end
-                // 6'h0F: begin sprite_rsv1[3] <= writedata[7:0]; sprite_rsv2[3] <= writedata[15:8]; end
-
-                // === Sprite 4: Ghost 3 ===
+                6'h0E: ghost_dir[2] <= writedata[1:0];
                 6'h10: begin ghost_x[3] <= writedata[7:0]; ghost_y[3] <= writedata[15:8]; end
-                // 6'h11: begin sprite_frame[4] <= writedata[7:0]; sprite_visible[4] <= writedata[15:8]; end
-                6'h12: begin ghost_dir[3] <= writedata[1:0]; end
-                // 6'h13: begin sprite_rsv1[4] <= writedata[7:0]; sprite_rsv2[4] <= writedata[15:8]; end
-
-                // === Score Register (4-digit decimal packed) ===
+                6'h12: ghost_dir[3] <= writedata[1:0];
                 6'h14: score <= writedata;
-
-                // === Control Register (only lower 8 bits used) ===
-                6'h15: begin  
-
+                6'h15: begin
                     if (writedata[7:0] == 8'b0) begin
                         $readmemh("map.vh", tile);
                         score <= 0;
@@ -222,39 +204,41 @@ end
                         ghost_x[1] <= 200; ghost_y[1] <= 100;
                         ghost_x[2] <= 300; ghost_y[2] <= 100;
                         ghost_x[3] <= 400; ghost_y[3] <= 100;
-                    end
-                    else if (writedata[4] == 1'b1) begin
+                    end else if (writedata[4]) begin
                         gameover_latched <= 1;
                     end
-
                 end
-
-                // === Pellet eat register ===
                 6'h16: trigger_tile_index <= writedata;
             endcase
         end
 
+        // === Game Over display and sound trigger ===
         if (gameover_latched) begin
-            // Display GAME OVER text
-            tile[3795 + 0]  <= 38 + (6 * 2);   // G
-            tile[3795 + 1]  <= 38 + (0 * 2);   // A
-            tile[3795 + 2]  <= 38 + (12 * 2);  // M
-            tile[3795 + 3]  <= 38 + (4 * 2);   // E
-            tile[3795 + 4]  <= 12'h25;         // blank tile
-            tile[3795 + 5]  <= 38 + (14 * 2);  // O
-            tile[3795 + 6]  <= 38 + (21 * 2);  // V
-            tile[3795 + 7]  <= 38 + (4 * 2);   // E
-            tile[3795 + 8]  <= 38 + (17 * 2);  // R
+            // Draw "GAME OVER"
+            tile[3795 + 0] <= 38 + (6 * 2);  // G
+            tile[3795 + 1] <= 38 + (0 * 2);  // A
+            tile[3795 + 2] <= 38 + (12 * 2); // M
+            tile[3795 + 3] <= 38 + (4 * 2);  // E
+            tile[3795 + 4] <= 12'h25;
+            tile[3795 + 5] <= 38 + (14 * 2); // O
+            tile[3795 + 6] <= 38 + (21 * 2); // V
+            tile[3795 + 7] <= 38 + (4 * 2);  // E
+            tile[3795 + 8] <= 38 + (17 * 2); // R
 
-            tile[3875 + 0]  <= 38 + (6 * 2) + 1;
-            tile[3875 + 1]  <= 38 + (0 * 2) + 1;
-            tile[3875 + 2]  <= 38 + (12 * 2) + 1;
-            tile[3875 + 3]  <= 38 + (4 * 2) + 1;
-            tile[3875 + 4]  <= 12'h25;
-            tile[3875 + 5]  <= 38 + (14 * 2) + 1;
-            tile[3875 + 6]  <= 38 + (21 * 2) + 1;
-            tile[3875 + 7]  <= 38 + (4 * 2) + 1;
-            tile[3875 + 8]  <= 38 + (17 * 2) + 1;
+            tile[3875 + 0] <= 38 + (6 * 2) + 1;
+            tile[3875 + 1] <= 38 + (0 * 2) + 1;
+            tile[3875 + 2] <= 38 + (12 * 2) + 1;
+            tile[3875 + 3] <= 38 + (4 * 2) + 1;
+            tile[3875 + 4] <= 12'h25;
+            tile[3875 + 5] <= 38 + (14 * 2) + 1;
+            tile[3875 + 6] <= 38 + (21 * 2) + 1;
+            tile[3875 + 7] <= 38 + (4 * 2) + 1;
+            tile[3875 + 8] <= 38 + (17 * 2) + 1;
+
+            if (!playing_gameover) begin
+                playing_gameover <= 1;
+                audio_index <= 0;
+            end
 
             gameover_wait <= gameover_wait + 1;
             if (gameover_wait == 50_000_000) begin
@@ -276,40 +260,20 @@ end
             end
         end
 
-        // Constant score display
-        tile[base_tile + 0]  = 38 + (18 * 2);
-        tile[base_tile + 1]  = 38 + (2 * 2);
-        tile[base_tile + 2]  = 38 + (14 * 2);
-        tile[base_tile + 3]  = 38 + (17 * 2);
-        tile[base_tile + 4]  = 38 + (4 * 2);
-        tile[base_tile + 80] = 38 + (18 * 2) + 1;
-        tile[base_tile + 81] = 38 + (2 * 2) + 1;
-        tile[base_tile + 82] = 38 + (14 * 2) + 1;
-        tile[base_tile + 83] = 38 + (17 * 2) + 1;
-        tile[base_tile + 84] = 38 + (4 * 2) + 1;
+        // === Pellet eaten → clear tile + play sound ===
+        if (trigger_tile_index != 13'd65535) begin
+            tile[trigger_tile_index] <= 8'h25;
 
-        d3 = score[15:12];
-        d2 = score[11:8];
-        d1 = score[7:4];
-        d0 = score[3:0];
+            if (!playing_audio && !playing_gameover) begin
+                playing_audio <= 1;
+                audio_index <= 0;
+            end
 
-        base_score_tile = 761;
-        tile[base_score_tile + 0]  = 38 + (26 * 2) + d3 * 2;
-        tile[base_score_tile + 1]  = 38 + (26 * 2) + d2 * 2;
-        tile[base_score_tile + 2]  = 38 + (26 * 2) + d1 * 2;
-        tile[base_score_tile + 3]  = 38 + (26 * 2) + d0 * 2;
-        tile[base_score_tile + 80] = 38 + (26 * 2) + d3 * 2 + 1;
-        tile[base_score_tile + 81] = 38 + (26 * 2) + d2 * 2 + 1;
-        tile[base_score_tile + 82] = 38 + (26 * 2) + d1 * 2 + 1;
-        tile[base_score_tile + 83] = 38 + (26 * 2) + d0 * 2 + 1;
-        if (trigger_tile_index != 65535)
-        begin
-                tile[trigger_tile_index] <= 8'h25;
-
+            trigger_tile_index <= 13'd65535;  // reset trigger
         end
-          
     end
 end
+
     initial begin
         $readmemh("pacman_up.vh",    pacman_up);
         $readmemh("pacman_right.vh", pacman_right);
