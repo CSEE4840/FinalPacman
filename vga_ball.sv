@@ -89,49 +89,85 @@ module vga_ball (
         base_tile = 752;
     end
 
-reg [15:0] audio_data[0:17554];
-reg [18:0] sample_index;
-reg [15:0] sample_clock;
-reg [15:0] current_sample;
+// ROMs for background and gameover
+	reg [15:0] audio_data[0:17554];       // 17,555 samples
+	reg [15:0] gameover_data[0:9999];   // adjust to your actual size
 
-initial $readmemh("audio.vh", audio_data);
+// Playback state
+	reg [13:0] audio_index;
+	reg [15:0] audio_sample;
+	reg [15:0] sample_clock;
+	reg        playing_gameover;
+
+// Target playback: finish in 0.1s
+localparam FAST_SAMPLE_PERIOD = 285;  // 50MHz / 175,550Hz ≈ 0.1s for 17,555 samples
+initial begin
+    $readmemh("audio.vh", bgm_data);
+    $readmemh("gameover.vh", gameover_data);
+end
 
 
     always @(posedge clk or posedge reset) begin
-    if (reset) begin
-        gameover_latched <= 0;
-        gameover_wait <= 0;
-        pacman_x <= 340;
-        pacman_y <= 240;
-        pacman_dir <= DIR_RIGHT;
-        score <= 0;
-        ghost_x[0] <= 0; ghost_y[0] <= 0; ghost_dir[0] <= DIR_LEFT;
-        ghost_x[1] <= 80; ghost_y[1] <= 0; ghost_dir[1] <= DIR_RIGHT;
-        ghost_x[2] <= 160; ghost_y[2] <= 0; ghost_dir[2] <= DIR_UP;
-        ghost_x[3] <= 250; ghost_y[3] <= 0; ghost_dir[3] <= DIR_DOWN;
-    end else begin
-	// Audio Streaming - 48kHz @ 50MHz (every 1041 cycles)
-	if (sample_clock >= 1041) begin
-	    sample_clock <= 0;
-	    current_sample <= audio_data[sample_index];
-	    sample_index <= (sample_index == 17554) ? 0 : sample_index + 1;
+	    if (reset) begin
+		gameover_latched <= 0;
+	        gameover_wait <= 0;
+	        pacman_x <= 340;
+	        pacman_y <= 240;
+	        pacman_dir <= DIR_RIGHT;
+	        score <= 0;
+	        ghost_x[0] <= 0; ghost_y[0] <= 0; ghost_dir[0] <= DIR_LEFT;
+	        ghost_x[1] <= 80; ghost_y[1] <= 0; ghost_dir[1] <= DIR_RIGHT;
+	        ghost_x[2] <= 160; ghost_y[2] <= 0; ghost_dir[2] <= DIR_UP;
+	        ghost_x[3] <= 250; ghost_y[3] <= 0; ghost_dir[3] <= DIR_DOWN;
+	    sample_clock     <= 0;
+	    audio_index      <= 0;
+	    audio_sample     <= 0;
+	    playing_gameover <= 0;
+	    L_DATA           <= 0;
+	    R_DATA           <= 0;
+	    L_VALID          <= 0;
+	    R_VALID          <= 0;
 	end else begin
-	    sample_clock <= sample_clock + 1;
-	end
+	    if (sample_clock >= FAST_SAMPLE_PERIOD) begin
+	        sample_clock <= 0;
 	
-	// Send to Audio Core when ready
-	if (L_READY) begin
-	    L_DATA <= current_sample;
-	    L_VALID <= 1;
-	end else begin
-	    L_VALID <= 0;
-	end
+	        // One-shot trigger of gameover sound
+	        if (gameover_latched && !playing_gameover) begin
+	            playing_gameover <= 1;
+	            audio_index <= 0;
+	        end
 	
-	if (R_READY) begin
-	    R_DATA <= current_sample;
-	    R_VALID <= 1;
-	end else begin
-	    R_VALID <= 0;
+	        // Sample selection
+	        if (playing_gameover) begin
+	            audio_sample <= gameover_data[audio_index];
+	            if (audio_index < 9999)
+	                audio_index <= audio_index + 1;
+	            else
+	                playing_gameover <= 0;  // Stop after one full play
+	        end else if (trigger_tile_index != 13'd65535) begin
+	            audio_sample <= bgm_data[audio_index];
+	            audio_index <= (audio_index == 17554) ? 0 : audio_index + 1;
+	        end else begin
+	            audio_sample <= 16'd0;  // Silence
+	        end
+	    end else begin
+	        sample_clock <= sample_clock + 1;
+	    end
+	
+	    // Avalon-ST streaming to WM8731
+	    if (L_READY) begin
+	        L_DATA <= audio_sample;
+	        L_VALID <= (sample_clock == 0);
+	    end else begin
+	        L_VALID <= 0;
+	    end
+	
+	    if (R_READY) begin
+	        R_DATA <= audio_sample;
+	        R_VALID <= (sample_clock == 0);
+	    end else begin
+	        R_VALID <= 0;
+	    end
 	end
 
         if (chipselect && write) begin
