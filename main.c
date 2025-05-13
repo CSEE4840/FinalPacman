@@ -308,8 +308,8 @@ void update_pacman() {
 
 
     // TP
-    if (pacman_x <= 1 * TILE_WIDTH && pacman_y == 14 * TILE_HEIGHT + TILE_HEIGHT / 2){
-        pacman_x = 27 * TILE_WIDTH + TILE_WIDTH / 2;
+    if (pacman_x <= 2 * TILE_WIDTH && pacman_y == 14 * TILE_HEIGHT + TILE_HEIGHT / 2){
+        pacman_x = 26 * TILE_WIDTH + TILE_WIDTH / 2;
     }
     if (pacman_x >= 26 * TILE_WIDTH && pacman_y == 14 * TILE_HEIGHT + TILE_HEIGHT / 2){
         pacman_x = 1 * TILE_WIDTH + TILE_WIDTH / 2;
