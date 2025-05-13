@@ -265,7 +265,7 @@ uint16_t generate_packed_score(uint16_t score) {
     int s = score % 10000;  // 保证最多4位
     return ((s / 1000) << 12) |
            (((s / 100) % 10) << 8) |
-           (((s / 10) % 10) << 4) 
+           (((s / 10) % 10) << 4) |
            (s % 10);
 }
 
