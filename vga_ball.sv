@@ -259,6 +259,31 @@ end
                 gameover_wait <= 0;
             end
         end
+	tile[base_tile + 0]  = 38 + (18 * 2);
+        tile[base_tile + 1]  = 38 + (2 * 2);
+        tile[base_tile + 2]  = 38 + (14 * 2);
+        tile[base_tile + 3]  = 38 + (17 * 2);
+        tile[base_tile + 4]  = 38 + (4 * 2);
+        tile[base_tile + 80] = 38 + (18 * 2) + 1;
+        tile[base_tile + 81] = 38 + (2 * 2) + 1;
+        tile[base_tile + 82] = 38 + (14 * 2) + 1;
+        tile[base_tile + 83] = 38 + (17 * 2) + 1;
+        tile[base_tile + 84] = 38 + (4 * 2) + 1;
+
+        d3 = score[15:12];
+        d2 = score[11:8];
+        d1 = score[7:4];
+        d0 = score[3:0];
+
+        base_score_tile = 761;
+        tile[base_score_tile + 0]  = 38 + (26 * 2) + d3 * 2;
+        tile[base_score_tile + 1]  = 38 + (26 * 2) + d2 * 2;
+        tile[base_score_tile + 2]  = 38 + (26 * 2) + d1 * 2;
+        tile[base_score_tile + 3]  = 38 + (26 * 2) + d0 * 2;
+        tile[base_score_tile + 80] = 38 + (26 * 2) + d3 * 2 + 1;
+        tile[base_score_tile + 81] = 38 + (26 * 2) + d2 * 2 + 1;
+        tile[base_score_tile + 82] = 38 + (26 * 2) + d1 * 2 + 1;
+        tile[base_score_tile + 83] = 38 + (26 * 2) + d0 * 2 + 1;
 
         // === Pellet eaten → clear tile + play sound ===
         if (trigger_tile_index != 13'd65535) begin
