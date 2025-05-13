@@ -526,8 +526,8 @@ void game_init_playfield(void) {
         "L.ebbf.ef.ebbbbbbf.ef.ebbf.R" // 9
         "L.guuh.rl.guuyxuuh.rl.guuh.R" // 10
         "L......rl....rl....rl......R" // 11
-        "2BBBBf.rzbbf rl ebbwl.eBBBB3" // 12
-        "     L.rxuuh gh guuyl.R     " // 13
+        "2BBBBf.rzbbf.rl.ebbwl.eBBBB3" // 12
+        "     L.rxuuh.gh.guuyl.R     " // 13
         "     L.rl..........rl.R     " // 14
         "     L.rl.mjs  tjn.rl.R     " // 15
         "UUUUUh.gh.i      q.gh.gUUUUU" // 16
@@ -540,7 +540,7 @@ void game_init_playfield(void) {
         "L............rl............R" // 23
         "L.ebbf.ebbbf.rl.ebbbf.ebbf.R" // 24
         "L.guyl.guuuh.gh.guuuh.rxuh.R" // 25
-        "L...rl.......  .......rl...R" // 26
+        "L...rl................rl...R" // 26
         "6bf.rl.ef.ebbbbbbf.ef.rl.eb8" // 27
         "7uh.gh.rl.guuyxuuh.rl.gh.gu9" // 28
         "L......rl....rl....rl......R" // 29
@@ -720,7 +720,7 @@ bool check_gameover() {
         }
     }
     //检查score
-    if (score >= 2680) {
+    if (score >= 2680 + 60) {
         printf("Game Over! You win!\n");
         return true;
     }
