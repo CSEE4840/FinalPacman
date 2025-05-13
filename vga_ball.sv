@@ -147,13 +147,17 @@ end
                     playing_gameover <= 0;
             end
             // Pellet sound
-            else if (playing_audio) begin
-                audio_sample <= audio_data[audio_index];
-                if (audio_index < 17554)
-                    audio_index <= audio_index + 1;
-                else
-                    playing_audio <= 0;
-            end else begin
+            // Pellet sound
+else if (playing_audio) begin
+    if (audio_index < 17555) begin
+        audio_sample <= audio_data[audio_index];
+        audio_index  <= audio_index + 1;
+    end else begin
+        audio_sample <= 16'd0;
+        playing_audio <= 0;
+        audio_index <= 0;  // reset index for next use
+    end
+end else begin
                 audio_sample <= 16'd0;
             end
         end else begin
