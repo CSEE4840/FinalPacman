@@ -1,3 +1,7 @@
+`include "ghost_up.vh"
+`include "ghost_down.vh"
+`include "ghost_left.vh"
+`include "ghost_right.vh"
 module vga_ball (
     input clk,
     input reset,
@@ -9,10 +13,11 @@ module vga_ball (
     output reg [7:0] VGA_R, VGA_G, VGA_B,
     output VGA_CLK, VGA_HS, VGA_VS,
     output VGA_BLANK_n, VGA_SYNC_n,
+
     input  logic        L_READY,
     input  logic        R_READY,
-    output logic [7:0] L_DATA,
-    output logic [7:0] R_DATA,
+    output logic [15:0] L_DATA,
+    output logic [15:0] R_DATA,
     output logic        L_VALID,
     output logic        R_VALID
 
@@ -33,8 +38,8 @@ module vga_ball (
     );
 
     localparam DIR_UP = 3'd0, DIR_RIGHT = 3'd1, DIR_DOWN = 3'd2, DIR_LEFT = 3'd3, DIR_EAT = 3'd4;
-localparam SCREEN_X_OFFSET = 26 * 8;  // 8 pixels per tile
-localparam SCREEN_Y_OFFSET = 15 * 8;
+localparam SCREEN_X_OFFSET = 25 * 8;  // 8 pixels per tile
+localparam SCREEN_Y_OFFSET = 14 * 8;
 
     reg [9:0] pacman_x;
     reg [9:0] pacman_y;
@@ -45,7 +50,6 @@ localparam SCREEN_Y_OFFSET = 15 * 8;
     reg [9:0] ghost_y[0:3];
     reg [1:0] ghost_dir[0:3];
 
-    reg [25:0] second_counter;
     reg gameover_latched;
     reg [25:0] gameover_wait;
 
@@ -65,7 +69,7 @@ localparam SCREEN_Y_OFFSET = 15 * 8;
     wire [2:0] ty = vcount[2:0];
 
     wire [12:0] tile_index = tile_y * 80 + tile_x;
-    wire [11:0] tile_id = tile[tile_index];
+    wire [7:0] tile_id = tile[tile_index];
     wire [7:0] bitmap_row = tile_bitmaps[tile_id * 8 + ty];
     wire pixel_on = bitmap_row[7 - tx];
 
@@ -95,23 +99,22 @@ initial $readmemh("audio.vh", audio_data);
 
     always @(posedge clk or posedge reset) begin
     if (reset) begin
-        second_counter <= 0;
         gameover_latched <= 0;
         gameover_wait <= 0;
         pacman_x <= 340;
         pacman_y <= 240;
         pacman_dir <= DIR_RIGHT;
         score <= 0;
-        ghost_x[0] <= 100; ghost_y[0] <= 100; ghost_dir[0] <= DIR_LEFT;
-        ghost_x[1] <= 200; ghost_y[1] <= 100; ghost_dir[1] <= DIR_RIGHT;
-        ghost_x[2] <= 300; ghost_y[2] <= 100; ghost_dir[2] <= DIR_UP;
-        ghost_x[3] <= 400; ghost_y[3] <= 100; ghost_dir[3] <= DIR_DOWN;
+        ghost_x[0] <= 0; ghost_y[0] <= 0; ghost_dir[0] <= DIR_LEFT;
+        ghost_x[1] <= 100; ghost_y[1] <= 0; ghost_dir[1] <= DIR_RIGHT;
+        ghost_x[2] <= 200; ghost_y[2] <= 0; ghost_dir[2] <= DIR_UP;
+        ghost_x[3] <= 300; ghost_y[3] <= 0; ghost_dir[3] <= DIR_DOWN;
     end else begin
 	// Audio Streaming - 48kHz @ 50MHz (every 1041 cycles)
-	if (sample_clock == 1041) begin
+	if (sample_clock >= 1041) begin
 	    sample_clock <= 0;
 	    current_sample <= audio_data[sample_index];
-	    sample_index <= (sample_index == 479999) ? 0 : sample_index + 1;
+	    sample_index <= (sample_index == 17554) ? 0 : sample_index + 1;
 	end else begin
 	    sample_clock <= sample_clock + 1;
 	end
@@ -131,14 +134,12 @@ initial $readmemh("audio.vh", audio_data);
 	    R_VALID <= 0;
 	end
 
-        if (!gameover_latched)
-            second_counter <= second_counter + 1;
         if (chipselect && write) begin
             case (address[4:0])
                 // === Sprite 0: Pac-Man ===
                 6'h00: begin pacman_x <= writedata[7:0]; pacman_y <= writedata[15:8]; end
                 // 6'h01: begin sprite_frame[0] <= writedata[7:0]; sprite_visible[0] <= writedata[15:8]; end
-                6'h02: begin pacman_dir <= writedata[1:0]; end
+                6'h02: begin pacman_dir <= writedata[2:0]; end
                 // 6'h03: begin sprite_rsv1[0] <= writedata[7:0]; sprite_rsv2[0] <= writedata[15:8]; end
 
                 // === Sprite 1: Ghost 0 ===
@@ -171,7 +172,7 @@ initial $readmemh("audio.vh", audio_data);
                 // === Control Register (only lower 8 bits used) ===
                 6'h15: begin  
 
-                    if (writedata == 16'h0000) begin
+                    if (writedata[7:0] == 8'b0) begin
                         $readmemh("map.vh", tile);
                         score <= 0;
                         pacman_x <= 340;
@@ -188,7 +189,6 @@ initial $readmemh("audio.vh", audio_data);
                     end
                     else if (writedata[4] == 1'b1) begin
                         gameover_latched <= 1;
-                        second_counter <= 0;
                     end
 
                 end
@@ -197,49 +197,6 @@ initial $readmemh("audio.vh", audio_data);
                 6'h16: trigger_tile_index <= writedata;
             endcase
         end
-        // if (chipselect && write) begin
-        //     case (address)
-        //         5'd0: begin
-        //             pacman_x <= writedata[7:0];
-        //             pacman_y <= writedata[15:8];
-        //         end
-        //         5'd2: pacman_dir <= writedata[10:8];
-        //         5'd4: trigger_tile_index <= writedata[12:0];
-        //         5'd5: begin
-        //             if (writedata == 16'h0001) begin
-        //                 gameover_latched <= 1;
-        //                 second_counter <= 0;
-        //             end else if (writedata == 16'h0000) begin
-        //                 $readmemh("map.vh", tile);
-        //                 score <= 0;
-        //                 game_timer <= 0;
-        //                 demo_index <= 13'd4088;
-        //                 pacman_x <= 340;
-        //                 pacman_y <= 240;
-        //                 pacman_dir <= DIR_RIGHT;
-        //                 ghost_dir[0] <= DIR_LEFT;
-        //                 ghost_dir[1] <= DIR_RIGHT;
-        //                 ghost_dir[2] <= DIR_UP;
-        //                 ghost_dir[3] <= DIR_DOWN;
-        //                 ghost_x[0] <= 100; ghost_y[0] <= 100;
-        //                 ghost_x[1] <= 200; ghost_y[1] <= 100;
-        //                 ghost_x[2] <= 300; ghost_y[2] <= 100;
-        //                 ghost_x[3] <= 400; ghost_y[3] <= 100;
-        //                 gameover_latched <= 0;
-        //                 gameover_wait <= 0;
-        //             end
-        //         end
-        //         5'd6: begin ghost_x[0] <= writedata[7:0]; ghost_y[0] <= writedata[15:8]; end 
-        //         5'd7: begin ghost_x[1] <= writedata[7:0]; ghost_y[1] <= writedata[15:8]; end
-        //         5'd8: begin ghost_x[2] <= writedata[7:0]; ghost_y[2] <= writedata[15:8]; end
-        //         5'd9: begin ghost_x[3] <= writedata[7:0]; ghost_y[3] <= writedata[15:8]; end
-        //         5'd10: ghost_dir[0] <= writedata[1:0];
-        //         5'd11: ghost_dir[1] <= writedata[1:0];
-        //         5'd12: ghost_dir[2] <= writedata[1:0];
-        //         5'd13: ghost_dir[3] <= writedata[1:0];
-        //         5'd14: score <= writedata[7:0];
-        //     endcase
-        // end
 
         if (gameover_latched) begin
             // Display GAME OVER text
@@ -311,13 +268,10 @@ initial $readmemh("audio.vh", audio_data);
         tile[base_score_tile + 83] = 38 + (26 * 2) + d0 * 2 + 1;
         if (trigger_tile_index != 65535)
         begin
-            // if ((pacman_y[9:3] * 80 + pacman_x[9:3]) == trigger_tile_index) begin
-                tile[trigger_tile_index] <= 12'h25;
-            // end
+                tile[trigger_tile_index] <= 8'h25;
+
         end
-            // if ((pacman_y[9:3] * 80 + pacman_x[9:3]) == trigger_tile_index) begin
-            //     tile[trigger_tile_index] <= 12'h25;
-            // end
+          
     end
 end
     initial begin
@@ -328,88 +282,11 @@ end
 	$readmemh("pacman_eat.vh",  pacman_eat);
     end
 
-    // Ghost shared sprite
-	localparam logic [1:0] GHOST_LEFT [0:15][0:15] = '{
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd3,2'd3,2'd2,2'd2,2'd1,2'd3,2'd3,2'd2,2'd2,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd1,2'd1,2'd3,2'd3,2'd2,2'd2,2'd1,2'd3,2'd3,2'd2,2'd2,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd0,2'd1,2'd1,2'd1,2'd0,2'd0,2'd1,2'd1,2'd1,2'd0,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd0,2'd0,2'd0,2'd1,2'd1,2'd0,2'd0,2'd1,2'd1,2'd0,2'd0,2'd0,2'd1,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0}
-};
-
-	localparam logic [1:0] GHOST_RIGHT [0:15][0:15] = '{
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd1,2'd2,2'd2,2'd3,2'd3,2'd1,2'd2,2'd2,2'd3,2'd3,2'd1,2'd0,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd2,2'd2,2'd3,2'd3,2'd1,2'd2,2'd2,2'd3,2'd3,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd0,2'd1,2'd1,2'd1,2'd0,2'd0,2'd1,2'd1,2'd1,2'd0,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd0,2'd0,2'd0,2'd1,2'd1,2'd0,2'd0,2'd1,2'd1,2'd0,2'd0,2'd0,2'd1,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0}
-};
-	localparam logic [1:0] GHOST_UP [0:15][0:15] = '{
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd1,2'd3,2'd3,2'd1,2'd1,2'd1,2'd3,2'd3,2'd1,2'd1,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd2,2'd3,2'd3,2'd2,2'd1,2'd2,2'd3,2'd3,2'd2,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd0,2'd1,2'd1,2'd1,2'd0,2'd0,2'd1,2'd1,2'd1,2'd0,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd0,2'd0,2'd0,2'd1,2'd1,2'd0,2'd0,2'd1,2'd1,2'd0,2'd0,2'd0,2'd1,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0}
-};
-
-	localparam logic [1:0] GHOST_DOWN [0:15][0:15] = '{
-     '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd2,2'd2,2'd1,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd0,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd2,2'd2,2'd2,2'd2,2'd1,2'd1,2'd0,2'd0},
-    '{2'd0,2'd1,2'd1,2'd2,2'd3,2'd3,2'd2,2'd1,2'd2,2'd3,2'd3,2'd2,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd3,2'd3,2'd1,2'd1,2'd1,2'd3,2'd3,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd1,2'd0,2'd1,2'd1,2'd1,2'd0,2'd0,2'd1,2'd1,2'd1,2'd0,2'd1,2'd1,2'd0},
-    '{2'd0,2'd1,2'd0,2'd0,2'd0,2'd1,2'd1,2'd0,2'd0,2'd1,2'd1,2'd0,2'd0,2'd0,2'd1,2'd0},
-    '{2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0,2'd0}
-};
-
-
 always @(*) begin
     VGA_R = 0; VGA_G = 0; VGA_B = 0;
 
     if (pixel_on) begin
-        if (tile_id == 12'h0A || tile_id >= 12'h26 || tile_id == 12'h14)
+        if (tile_id == 8'h0A || tile_id >= 8'h26 || tile_id == 8'h14)
             {VGA_R, VGA_G, VGA_B} = 24'hFFFFFF;
         else
             VGA_B = 8'hFF;
