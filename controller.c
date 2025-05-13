@@ -77,7 +77,7 @@ void detect_presses(struct controller_pkt pkt, char *buttons, int mode) {
     if ((pkt.ab & 0x10)) {
         buttons[5] = vals[5]; // X pressed
     }
-    if ((pkt.ab & 0x40)) {
+    if ((pkt.ab & 0x02)) {
         buttons[6] = vals[6]; // L pressed
     }
         // if ((pkt.rl & 0x20)) {
