@@ -908,7 +908,7 @@ int main() {
             }
 
             update_all_to_driver();
-            usleep(1000000);
+            usleep(100000);
         }
 
         while (!(*CONTROL_REG & CTRL_RESET)) {
